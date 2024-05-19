@@ -1,4 +1,4 @@
-# PENTA - KILL - 
+# PENTA - KILL - Data_science
 
 ## 프로젝트 개요
 
