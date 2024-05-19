@@ -32,6 +32,9 @@
             <td align="center"><a href="">차승주</a></td>
         </tr>
     </tbody>
+    
 </table>
-
+<tr>
+            <th>[데이터 수집 현황](https://docs.google.com/spreadsheets/d/1ghRFtpr2rG8ZR6tFqJwerrTmvu8ZdV2H71YbGOxpCIE/edit?usp=sharing)</th>
+        </tr>
 ##
