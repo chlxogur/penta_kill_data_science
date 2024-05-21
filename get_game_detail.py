@@ -133,7 +133,8 @@ def getGameStatusOrderedbyTime(game_id):
         starting_time = datetime.datetime.strptime(jsonParser(apiResult, 0)["timestamp"][:19], "%Y-%m-%dT%H:%M:%S")     # Zulu time 표시를 빼고 앞부분만 쓰기 위해 19까지 슬라이스.
         starting_time = starting_time - datetime.timedelta(seconds = starting_time.second % 10)                         # 이유는 모르겠는데 10초 단위로만 요청할 수 있는 것 같다. 
                                                                                                                         # 34초 데이터 주세요 이런거 요청하면 400 에러 뜸. 그래서 초를 10초단위로 끊음.
-        max_end_time = starting_time + datetime.timedelta(hours = 2)                                                    # 최대 경기 시간(2시간, 종료조건에 쓸 생각입니다)
+        
+        max_end_time = starting_time + datetime.timedelta(hours = 5)                                                    # 아무리그래도 한경기에 퍼즈포함 5시간 걸리진 않겠지
         max_end_time_str = max_end_time.strftime("%Y-%m-%dT%H:%M:%S") + "Z" # 형식 맞춰주기
     else:
         print(f"Failed to fetch data from game ID : {game_id}, Status code {apiResult.status_code}")
@@ -157,27 +158,18 @@ def getGameStatusOrderedbyTime(game_id):
                     game_table.append(details)
                 else:                               # 중복 데이터 확인 및 반복 카운트
                     if previous_data is not None and (previous_data["timestamp"] == details["timestamp"]): # == 만으로는 중복데이터 확인이 안 되어 시간을 비교
-                        if repetition_count == 0:
-                            repetition_start_time = query_time_str
-                        repetition_count += 1
-                        if details["gameState"] == "in_game":
-                            if repetition_count >= MAX_REPETITION_COUNT:
-                                if jsonParser(requestWithHandlingHttperr(f"{getWindow_url}?startingTime={max_end_time_str}"),1)["timestamp"] == details["timestamp"] and (details["blue_inhibitors"] > 0 or details["red_inhibitors"] > 0):
-                                    break       # 게임시작 2시간 뒤 요청을 날려도 같은 대답이 들어오면, 그리고 어느쪽이든 억제기가 한 번이라도 파괴됐으면 정상 게임 종료로 판단
-                                else:
-                                    return [str(game_id), apiResult.status_code, details["gameState"], repetition_start_time, query_time_str]     # 종료조건에 맞지 않는데 중복값이 너무 많이 발생하면 invalid로 처리.
-                        else:
-                            if repetition_count >= MAX_REPETITION_COUNT * 10:                                               # in_game 상태가 아닐 때(퍼즈상태 등)는 조금 더 오래 기다려 줌
-                                return [str(game_id), apiResult.status_code, details["gameState"], repetition_start_time, query_time_str]         # 퍼즈 상태로 끝난 게임은 invalid로 처리.
+                        if jsonParser(requestWithHandlingHttperr(f"{getWindow_url}?startingTime={max_end_time_str}"),1)["timestamp"] == details["timestamp"]:   # 5시간 이후 데이터랑 같으면
+                            if details["blue_inhibitors"] > 0 or details["red_inhibitors"] > 0:                 # 억제기가 하나라도 부숴졌으면 정상종료
+                                break
+                            else:
+                                return [str(game_id), detailsApiResponse.status_code, details["gameState"], query_time_str]     # 종료조건에 맞지 않는데 중복값이 너무 많이 발생하면 invalid로 처리.
                     else:
-                        repetition_start_time = None
-                        repetition_count = 0
                         previous_data = details
                         if details["totalGoldEarned_0"] != 0:      # 게임 시작 시 잠깐동안 전부 0으로 나오는 데이터는 포함하지 않음.
                             game_table.append(details)
         else:                                       # 응답에 뭔가 문제가 생겼을 때
-            print(f"Failed to fetch data for {query_time_str} from game ID : {game_id}, Status code {apiResult.status_code}")
-            return [str(game_id), apiResult.status_code, query_time_str] # 비정상 응답이 온 game id를 리턴
+            print(f"Failed to fetch data for {query_time_str} from game ID : {game_id}, Status code {detailsApiResponse.status_code}")
+            return [str(game_id), detailsApiResponse.status_code, query_time_str] # 비정상 응답이 온 game id를 리턴
         
     return pd.DataFrame(game_table)
 
@@ -246,8 +238,8 @@ for i in id_list:
                 df.columns = ["game_id", "status_code"]
             elif df.shape[1] == 3:                                  # 데이터를 한참 시간순서대로 받는 도중에 http에러로 망했을 때
                 df.columns = ["game_id", "status_code", "timestamp"]
-            elif df.shape[1] == 5:                                  # 데이터를 한참 시간순서대로 받는 도중에 중복값이 많아 때
-                df.columns = ["game_id", "status_code", "last_game_state", "repeatition_start_time", "timestamp"]
+            elif df.shape[1] == 4:                                  # 데이터를 한참 시간순서대로 받는 도중에 중복값이 많아 망했을 때
+                df.columns = ["game_id", "status_code", "last_game_state", "timestamp"]
             df.to_excel(f'../data/collected_data/{game_id}_invalid.xlsx', index=False)
         elif type(playerStatus) is list:
             df = pd.Series(playerStatus).to_frame().T
@@ -255,8 +247,8 @@ for i in id_list:
                 df.columns = ["game_id", "status_code"]
             elif df.shape[1] == 3:                                  # 데이터를 한참 시간순서대로 받는 도중에 http에러로 망했을 때
                 df.columns = ["game_id", "status_code", "timestamp"]
-            elif df.shape[1] == 5:                                  # 데이터를 한참 시간순서대로 받는 도중에 중복값이 많아 망했을 때
-                df.columns = ["game_id", "status_code", "last_game_state", "repeatition_start_time", "timestamp"]
+            elif df.shape[1] == 4:                                  # 데이터를 한참 시간순서대로 받는 도중에 중복값이 많아 망했을 때
+                df.columns = ["game_id", "status_code", "last_game_state", "timestamp"]
             df.to_excel(f'../data/collected_data/{game_id}_invalid.xlsx', index=False)
         else:                                                       # 정상이면
             for i in range(playerStatus.shape[0]):                  # concat을 위해 playerinfo를 아래로 복제해줌
