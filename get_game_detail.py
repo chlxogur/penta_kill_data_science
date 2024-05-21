@@ -207,15 +207,24 @@ def requestWithHandlingHttperr(url):
             result = requests.get(url, headers = headers)       # API에 request 요청
             result.raise_for_status()                           # http에러가 나오면 예외를 발생시킴 -> except로 점프
             return result
-        except ConnectionError as e:
+        except requests.exceptions.ConnectionError as e:
             if isinstance(e.args[0], ConnectionResetError) and e.args[0].winerror == ERRNO_10054:
                 print(f"Attempt {i + 1} failed with error 10054. Retrying in {RETRY_DELAY_SEC} seconds...")
                 time.sleep(RETRY_DELAY_SEC)
             else:                           # 다른 http 에러면
                 raise
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 500:
+                print(f"Attempt {i + 1} failed with 500 Internal Server Error. Retrying in {RETRY_DELAY_SEC} seconds...")
+                time.sleep(RETRY_DELAY_SEC)
+            elif e.response.status_code == 504:
+                print(f"Attempt {i + 1} failed with 504 Gateway Timeout. Retrying in {RETRY_DELAY_SEC} seconds...")
+                time.sleep(RETRY_DELAY_SEC)
+            else:  # 다른 HTTPError 예외 처리
+                raise
     game_id = url[url.rfind("/") + 1:]
     print(f"Failed to fetch data from game ID : {game_id} after {RETRY_COUNT} attempts.")
-    # raise Exception(f"Failed to fetch data from game ID : {game_id} after {RETRY_COUNT} attempts.")
+    raise Exception(f"Failed to fetch data from game ID : {game_id} after {RETRY_COUNT} attempts")
 
 ###### 아래부턴 실행되는 부분 ######
 id_list = [22] # <- 요 부분에 원하는 숫자 넣고 돌리시면 됩니다.
