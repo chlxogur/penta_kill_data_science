@@ -228,7 +228,7 @@ def requestWithHandlingHttperr(url):
 ###### 아래부턴 실행되는 부분 ######
 id_list = [22] # <- 요 부분에 원하는 숫자 넣고 돌리시면 됩니다.
 for i in id_list:
-    game_ids = pd.read_excel(f"data/game_ids/game_id_{i}.xlsx") 
+    game_ids = pd.read_excel(f"../data/game_ids/game_id_{i}.xlsx") 
 
     for idx, row in tqdm(game_ids.iterrows(), desc="Entire Progress", total = len(game_ids)):  # 게임 번호를 하나씩 row에 넣어 분기를 돌립니다.
         game_id = row["ID"]
@@ -237,8 +237,8 @@ for i in id_list:
         playerinfo_list = []
         
         # data폴더 내에 xlsx 파일로 저장
-        os.makedirs('data', exist_ok=True)
-        os.makedirs('data/collected_data', exist_ok=True)
+        os.makedirs('../data', exist_ok=True)
+        os.makedirs('../data/collected_data', exist_ok=True)
 
         if type(playerinfo) is list:                                # 정상적인 데이터가 모이지 않았을 때 getParticipantInfo()와 getGameStatusOrderedbyTime()은 List를 반환합니다.
             df = pd.Series(playerinfo).to_frame().T
@@ -248,7 +248,7 @@ for i in id_list:
                 df.columns = ["game_id", "status_code", "timestamp"]
             elif df.shape[1] == 5:                                  # 데이터를 한참 시간순서대로 받는 도중에 중복값이 많아 때
                 df.columns = ["game_id", "status_code", "last_game_state", "repeatition_start_time", "timestamp"]
-            df.to_excel(f'data/collected_data/{game_id}_invalid.xlsx', index=False)
+            df.to_excel(f'../data/collected_data/{game_id}_invalid.xlsx', index=False)
         elif type(playerStatus) is list:
             df = pd.Series(playerStatus).to_frame().T
             if df.shape[1] == 2:                                    # 데이터 요청 처음부터 망했을 때
@@ -257,11 +257,11 @@ for i in id_list:
                 df.columns = ["game_id", "status_code", "timestamp"]
             elif df.shape[1] == 5:                                  # 데이터를 한참 시간순서대로 받는 도중에 중복값이 많아 망했을 때
                 df.columns = ["game_id", "status_code", "last_game_state", "repeatition_start_time", "timestamp"]
-            df.to_excel(f'data/collected_data/{game_id}_invalid.xlsx', index=False)
+            df.to_excel(f'../data/collected_data/{game_id}_invalid.xlsx', index=False)
         else:                                                       # 정상이면
             for i in range(playerStatus.shape[0]):                  # concat을 위해 playerinfo를 아래로 복제해줌
                 playerinfo_list.append(playerinfo)
             playerinfo_df = pd.DataFrame(playerinfo_list)
             df = pd.concat([playerStatus, playerinfo_df], axis = 1)
-            df.to_excel(f'data/collected_data/{game_id}.xlsx', index=False)
+            df.to_excel(f'../data/collected_data/{game_id}.xlsx', index=False)
     print(f"Collecting data from game_id_{i} is completed!")
