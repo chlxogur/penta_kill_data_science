@@ -220,6 +220,9 @@ def requestWithHandlingHttperr(url):
             elif e.response.status_code == 504:
                 print(f"Attempt {i + 1} failed with 504 Gateway Timeout. Retrying in {RETRY_DELAY_SEC} seconds...")
                 time.sleep(RETRY_DELAY_SEC)
+            elif e.response.status_code == 503:
+                print(f"Attempt {i + 1} failed with 504 Gateway Timeout. Retrying in {RETRY_DELAY_SEC} seconds...")
+                time.sleep(RETRY_DELAY_SEC)
             else:  # 다른 HTTPError 예외 처리
                 raise
     game_id = url[url.rfind("/") + 1:]
