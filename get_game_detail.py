@@ -119,10 +119,10 @@ def getGameStatusOrderedbyTime(game_id):
     
     # 중복검사용 변수 세팅 및 초기화
     previous_data = None
-    repetition_start_time = None
-    repetition_count = 0
+    #repetition_start_time = None
+    #repetition_count = 0
     INITIAL_COLLECTION_PERIOD = 60  # 중복 검사를 시작하기 전에 수집할 초기 데이터 수
-    MAX_REPETITION_COUNT = 6
+    #MAX_REPETITION_COUNT = 6
 
     HTTP_OK = 200
     
@@ -192,9 +192,12 @@ def getParticipantInfo(game_id):
     
 # try-except를 통해 서버로부터 10054에러가 떴을 때 잠시 기다렸다 재시도하는 루틴입니다.
 def requestWithHandlingHttperr(url):
-    RETRY_COUNT = 12            # 기본 반복 12회
+    RETRY_COUNT = 12                # 기본 반복 12회
     RETRY_DELAY_SEC = 10            # 대기 10초
     ERRNO_10054 = 10054
+    ERRNO_500 = 500
+    ERRNO_503 = 503
+    ERRNO_504 = 504
 
     REQUEST_INTERVAL_SEC = 0.1
 
@@ -214,14 +217,14 @@ def requestWithHandlingHttperr(url):
             else:                           # 다른 http 에러면
                 raise
         except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 500:
+            if e.response.status_code == ERRNO_500:
                 print(f"Attempt {i + 1} failed with 500 Internal Server Error. Retrying in {RETRY_DELAY_SEC} seconds...")
                 time.sleep(RETRY_DELAY_SEC)
-            elif e.response.status_code == 504:
-                print(f"Attempt {i + 1} failed with 504 Gateway Timeout. Retrying in {RETRY_DELAY_SEC} seconds...")
+            elif e.response.status_code == ERRNO_503:
+                print(f"Attempt {i + 1} failed with 503 Service Unavailable. Retrying in {RETRY_DELAY_SEC} seconds...")
                 time.sleep(RETRY_DELAY_SEC)
-            elif e.response.status_code == 503:
-                print(f"Attempt {i + 1} failed with 503 Gateway Timeout. Retrying in {RETRY_DELAY_SEC} seconds...")
+            elif e.response.status_code == ERRNO_504:
+                print(f"Attempt {i + 1} failed with 504 Gateway Timeout. Retrying in {RETRY_DELAY_SEC} seconds...")
                 time.sleep(RETRY_DELAY_SEC)
             else:  # 다른 HTTPError 예외 처리
                 raise
@@ -230,7 +233,7 @@ def requestWithHandlingHttperr(url):
     raise Exception(f"Failed to fetch data from game ID : {game_id} after {RETRY_COUNT} attempts")
 
 ###### 아래부턴 실행되는 부분 ######
-id_list = [22] # <- 요 부분에 원하는 숫자 넣고 돌리시면 됩니다.
+id_list = [27, 28] # <- 요 부분에 원하는 숫자 넣고 돌리시면 됩니다.
 for i in id_list:
     game_ids = pd.read_excel(f"../data/game_ids/game_id_{i}.xlsx") 
 
@@ -263,7 +266,7 @@ for i in id_list:
                 df.columns = ["game_id", "status_code", "last_game_state", "timestamp"]
             df.to_excel(f'../data/collected_data/{game_id}_invalid.xlsx', index=False)
         else:                                                       # 정상이면
-            for i in range(playerStatus.shape[0]):                  # concat을 위해 playerinfo를 아래로 복제해줌
+            for j in range(playerStatus.shape[0]):                  # concat을 위해 playerinfo를 아래로 복제해줌
                 playerinfo_list.append(playerinfo)
             playerinfo_df = pd.DataFrame(playerinfo_list)
             df = pd.concat([playerStatus, playerinfo_df], axis = 1)
