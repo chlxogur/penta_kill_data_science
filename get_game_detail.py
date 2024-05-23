@@ -148,7 +148,7 @@ def getGameStatusOrderedbyTime(game_id):
         
         detailsApiResponse = requestWithHandlingHttperr(f"{getDetails_url}?startingTime={query_time_str}") # API에서 getDetails 요청
         windowApiResponse = requestWithHandlingHttperr(f"{getWindow_url}?startingTime={query_time_str}")  # API에서 getWindow 요청
-        if detailsApiResponse.status_code == HTTP_OK and windowApiResponse.status_code:
+        if detailsApiResponse.status_code == HTTP_OK and windowApiResponse.status_code == HTTP_OK:
             details = jsonParser(detailsApiResponse, 0)         # get으로 받은 결과를 넘겨주고 리스트를 받는 함수. 2번째 인수로 무슨 타입인지 구분(0 : getDetails, 1 : getWindow)
             window = jsonParser(windowApiResponse, 1)           # get으로 받은 결과를 넘겨주고 리스트를 받는 함수. 2번째 인수로 무슨 타입인지 구분(0 : getDetails, 1 : getWindow)
             if details["timestamp"] == window["timestamp"]:
@@ -233,7 +233,7 @@ def requestWithHandlingHttperr(url):
     raise Exception(f"Failed to fetch data from game ID : {game_id} after {RETRY_COUNT} attempts")
 
 ###### 아래부턴 실행되는 부분 ######
-id_list = [27, 28] # <- 요 부분에 원하는 숫자 넣고 돌리시면 됩니다.
+id_list = [0] # <- 요 부분에 원하는 숫자 넣고 돌리시면 됩니다.
 for i in id_list:
     game_ids = pd.read_excel(f"../data/game_ids/game_id_{i}.xlsx") 
 
