@@ -119,10 +119,7 @@ def getGameStatusOrderedbyTime(game_id):
     
     # 중복검사용 변수 세팅 및 초기화
     previous_data = None
-    #repetition_start_time = None
-    #repetition_count = 0
     INITIAL_COLLECTION_PERIOD = 60  # 중복 검사를 시작하기 전에 수집할 초기 데이터 수
-    #MAX_REPETITION_COUNT = 6
 
     HTTP_OK = 200
     
@@ -237,7 +234,7 @@ id_list = [0] # <- 요 부분에 원하는 숫자 넣고 돌리시면 됩니다.
 for i in id_list:
     game_ids = pd.read_excel(f"../data/game_ids/game_id_{i}.xlsx") 
 
-    for idx, row in tqdm(game_ids.iterrows(), desc="Entire Progress", total = len(game_ids)):  # 게임 번호를 하나씩 row에 넣어 분기를 돌립니다.
+    for idx, row in tqdm(game_ids.iterrows(), desc=f"Progress of game_id_{i}", total = len(game_ids)):  # 게임 번호를 하나씩 row에 넣어 분기를 돌립니다.
         game_id = row["ID"]
         playerinfo = getParticipantInfo(game_id)                        # 플레이어 정보를 뽑아냄
         playerStatus = getGameStatusOrderedbyTime(game_id)              # 게임 상세 데이터를 뽑아냄
