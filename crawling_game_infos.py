@@ -5,6 +5,7 @@ from tqdm import tqdm
 import time
 import pandas as pd
 import numpy as np
+import json
 
 def requestWithHandlingHttperr(url):
     RETRY_COUNT = 12                # 기본 반복 12회
@@ -101,4 +102,9 @@ for tournament_link in tqdm(links):
             result.append(row)
 
 df = pd.DataFrame(result)
-df.to_excel("../data/crawling_result.xlsx", index = False)
+
+with open('../data/team_code.json', 'r') as f:
+    team_code_map = json.load(f)
+df['blueteam_code'] = df['blueteam'].apply(lambda x : team_code_map.get(x, np.nan))
+df['redteam_code'] = df['redteam'].apply(lambda x : team_code_map.get(x, np.nan))
+df.to_excel("../data/crawling_result_with_codenames.xlsx", index=False)

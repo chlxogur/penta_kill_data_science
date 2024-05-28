@@ -119,10 +119,7 @@ def getGameStatusOrderedbyTime(game_id):
     
     # 중복검사용 변수 세팅 및 초기화
     previous_data = None
-    #repetition_start_time = None
-    #repetition_count = 0
     INITIAL_COLLECTION_PERIOD = 60  # 중복 검사를 시작하기 전에 수집할 초기 데이터 수
-    #MAX_REPETITION_COUNT = 6
 
     HTTP_OK = 200
     
