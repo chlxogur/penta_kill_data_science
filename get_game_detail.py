@@ -87,7 +87,8 @@ def jsonParser(data, flag):
                 blank_where = summonerName.find(" ")
                 team = summonerName[:blank_where]                                       # 팀 코드
                 name = summonerName[blank_where + 1:]                                   # 소환사명
-                result_data[f"esportsPlayerId_{idx}"] = player["esportsPlayerId"]       # 선수의 고유 ID
+                if "esportsPlayerId" in player:
+                    result_data[f"esportsPlayerId_{idx}"] = player["esportsPlayerId"]       # 선수의 고유 ID
                 result_data[f"teamCode_{idx}"] = team                                   # 팀 코드
                 result_data[f"summonerName_{idx}"] = name                               # 소환사명
                 result_data[f"side_{idx}"] = "Blue"                                     # 블루 진영이라는 뜻
@@ -99,7 +100,8 @@ def jsonParser(data, flag):
                 blank_where = summonerName.find(" ")
                 team = summonerName[:blank_where]                                       # 팀 코드
                 name = summonerName[blank_where + 1:]                                   # 소환사명
-                result_data[f"esportsPlayerId_{idx + PARTICIPANT_NUMBER_OF_A_TEAM}"] = player["esportsPlayerId"]    # 선수의 고유 ID
+                if "esportsPlayerId" in player:
+                    result_data[f"esportsPlayerId_{idx + PARTICIPANT_NUMBER_OF_A_TEAM}"] = player["esportsPlayerId"]    # 선수의 고유 ID
                 result_data[f"teamCode_{idx + PARTICIPANT_NUMBER_OF_A_TEAM}"] = team                                # 팀 코드
                 result_data[f"summonerName_{idx + PARTICIPANT_NUMBER_OF_A_TEAM}"] = name                            # 소환사명
                 result_data[f"side_{idx + PARTICIPANT_NUMBER_OF_A_TEAM}"] = "Red"                                   # 레드 진영이라는 뜻
