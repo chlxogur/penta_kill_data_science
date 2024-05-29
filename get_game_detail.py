@@ -4,6 +4,7 @@ import json
 import datetime
 import time
 import pandas as pd
+import numpy as np
 from tqdm import tqdm
 
 # 응답을 컬럼에맞춰 넣어 딕셔너리형태로 반환하는 함수입니다.
@@ -87,7 +88,8 @@ def jsonParser(data, flag):
                 blank_where = summonerName.find(" ")
                 team = summonerName[:blank_where]                                       # 팀 코드
                 name = summonerName[blank_where + 1:]                                   # 소환사명
-                if "esportsPlayerId" in player:
+                result_data[f"esportsPlayerId_{idx}"] = np.nan
+                if player.get("esportsPlayerId") is not None:
                     result_data[f"esportsPlayerId_{idx}"] = player["esportsPlayerId"]       # 선수의 고유 ID
                 result_data[f"teamCode_{idx}"] = team                                   # 팀 코드
                 result_data[f"summonerName_{idx}"] = name                               # 소환사명
@@ -100,7 +102,8 @@ def jsonParser(data, flag):
                 blank_where = summonerName.find(" ")
                 team = summonerName[:blank_where]                                       # 팀 코드
                 name = summonerName[blank_where + 1:]                                   # 소환사명
-                if "esportsPlayerId" in player:
+                result_data[f"esportsPlayerId_{idx + PARTICIPANT_NUMBER_OF_A_TEAM}"] = np.nan
+                if player.get("esportsPlayerId") is not None:
                     result_data[f"esportsPlayerId_{idx + PARTICIPANT_NUMBER_OF_A_TEAM}"] = player["esportsPlayerId"]    # 선수의 고유 ID
                 result_data[f"teamCode_{idx + PARTICIPANT_NUMBER_OF_A_TEAM}"] = team                                # 팀 코드
                 result_data[f"summonerName_{idx + PARTICIPANT_NUMBER_OF_A_TEAM}"] = name                            # 소환사명

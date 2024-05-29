@@ -55,7 +55,7 @@ def requestWithHandlingHttperr(url):
 NUMBER_OF_PLAYERS_OF_A_TEAM = 5
 result = []
 
-df = pd.read_excel("../data/pentakill 경기 상세데이터 수집기록240527점심.xlsx", sheet_name="경기 세부 링크")
+df = pd.read_excel("../data/pentakill 경기 상세데이터 수집기록.xlsx", sheet_name="경기 세부 링크")
 
 list_2 = df["Unnamed: 7"]
 list_1 = df["링크"]
