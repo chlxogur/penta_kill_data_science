@@ -7,6 +7,8 @@ import pandas as pd
 import numpy as np
 import json
 
+NUMBER_OF_PLAYERS_OF_A_TEAM = 5
+
 def requestWithHandlingHttperr(url):
     RETRY_COUNT = 12                # 기본 반복 12회
     RETRY_DELAY_SEC = 10            # 대기 10초
@@ -49,19 +51,8 @@ def requestWithHandlingHttperr(url):
     print(f"Failed to fetch data from tournament : {tournament_name} after {RETRY_COUNT} attempts.")
     raise Exception(f"Failed to fetch data from tournament : {tournament_name} after {RETRY_COUNT} attempts")
 
-
-##### 실행되는 부분 #####
-
-NUMBER_OF_PLAYERS_OF_A_TEAM = 5
-result = []
-
-df = pd.read_excel("../data/pentakill 경기 상세데이터 수집기록.xlsx", sheet_name="경기 세부 링크")
-
-list_2 = df["Unnamed: 7"]
-list_1 = df["링크"]
-links = pd.concat([list_1, list_2], ignore_index=True)
-
-for tournament_link in tqdm(links):
+def scrapInAPage(tournament_link):
+    result = []
     if tournament_link is not np.nan:
         match_history = tournament_link + "/Match_History"
 
@@ -100,11 +91,33 @@ for tournament_link in tqdm(links):
             for idx, pick in enumerate(data[7].find_all("span")):
                 row[f"pick_{idx + NUMBER_OF_PLAYERS_OF_A_TEAM}"] = pick.attrs["title"]
             result.append(row)
+    return pd.DataFrame(result)
 
-df = pd.DataFrame(result)
+###### 실행되는 부분 ######
+result = pd.DataFrame()
+df = pd.read_excel("../data/pentakill 경기 상세데이터 수집기록.xlsx", sheet_name="경기 세부 링크")
+
+for idx, row in tqdm(df.iterrows(), total = df.shape[0]):
+    links = []
+    links.append(row["링크"])
+    if row["플옵링크_1"] is not np.nan: links.append(row["플옵링크_1"])
+    if row["플옵링크_2"] is not np.nan: links.append(row["플옵링크_2"])
+    info_fromapi = {
+        "tournament_name" : row["이름"],
+        "tournament_id" : str(row["id"]),
+        "tournament_slug" : row["slug"]
+    }
+    for link in links:
+        info_fromapi_list = []
+        scrapped_df = scrapInAPage(link)
+        for j in range(scrapped_df.shape[0]):                  # concat을 위해 api에서 나온 토너먼트 정보를 아래로 복제해줌
+            info_fromapi_list.append(info_fromapi)
+        info_fromapi_df = pd.DataFrame(info_fromapi_list)
+        scrapped_df = pd.concat([scrapped_df, info_fromapi_df], axis = 1)
+        result = pd.concat([result, scrapped_df], axis = 0, ignore_index=True)
 
 with open('../data/team_code.json', 'r') as f:
     team_code_map = json.load(f)
-df['blueteam_code'] = df['blueteam'].apply(lambda x : team_code_map.get(x, np.nan))
-df['redteam_code'] = df['redteam'].apply(lambda x : team_code_map.get(x, np.nan))
-df.to_excel("../data/crawling_result_with_codenames.xlsx", index=False)
+result['blueteam_code'] = result['blueteam'].apply(lambda x : team_code_map.get(x, np.nan))
+result['redteam_code'] = result['redteam'].apply(lambda x : team_code_map.get(x, np.nan))
+result.to_excel("../data/crawling_result_with_codenames.xlsx", index=False)
