@@ -82,6 +82,13 @@ def scrapInAPage(tournament_link):
                 "redteam" : redteam,
                 "winner_side" : winner_side
             }
+            if blueteam == "Beşiktaş Esports": row["blueteam"] = "Besiktas Esports"                     # 터키팀 특수문자를 알파벳으로 변경해보자.
+            if blueteam == "Beşiktaş.Oyun Hizmetleri": row["blueteam"] = "Besiktas.Oyun Hizmetleri"
+            if blueteam == "Fenerbahçe Esports": row["blueteam"] = "Fenerbahce Esports"
+            if redteam == "Beşiktaş Esports": row["redteam"] = "Besiktas Esports"
+            if redteam == "Beşiktaş.Oyun Hizmetleri": row["redteam"] = "Besiktas.Oyun Hizmetleri"
+            if redteam == "Fenerbahçe Esports": row["redteam"] = "Fenerbahce Esports"
+
             for idx, ban in enumerate(data[5].find_all("span")):
                 row[f"ban_{idx}"] = ban.attrs["title"]
             for idx, ban in enumerate(data[6].find_all("span")):
