@@ -57,9 +57,11 @@ for idx, row in tqdm(game_ids.iterrows()):
         json_data = apiResult.json()
         if 'gameMetadata' in json_data and len(json_data['gameMetadata']) > 0:
             game = json_data["gameMetadata"]
-            patch_ver = game["patchVersion"]
-            patch_ver = patch_ver[:patch_ver[patch_ver.find(".")+1:].find(".")]
-            row["patch"] = patch_ver
+            if game.get("patchVersion") is not None:
+                patch_ver = game["patchVersion"]
+                where = patch_ver.find(".")
+                patch_ver = patch_ver[:patch_ver[where+1:].find(".")+where+1] # [where+1:]부터 "."의 위치를 찾았으니까 인덱스가 예상한것보다 한 칸 앞으로 당겨져 있을것이므로 +1을 넣어 보정.
+                row["patch"] = patch_ver
             result.append(row)
 
 result_df = pd.DataFrame(result)
