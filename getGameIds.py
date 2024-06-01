@@ -1,10 +1,11 @@
 import pandas as pd
 import requests
 import time
-from tqdm import tqdm
+from tqdm import tqdm, tqdm_pandas
 import numpy as np
 
 # get_game_detail.py에서 2024년 5월 31일에 복사, 이거 이러지말고 모듈화해서 import 하고 싶은데 get_game_detail.py에 main()부분이 없어야 하는 건가?
+# 06.02 headers를 인자로 받도록 수정
 def requestWithHandlingHttperr(url, headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36'}):
     RETRY_COUNT = 12                # 기본 반복 12회
     RETRY_DELAY_SEC = 10            # 대기 10초
@@ -14,8 +15,6 @@ def requestWithHandlingHttperr(url, headers = {'user-agent': 'Mozilla/5.0 (Windo
     ERRNO_504 = 504
 
     REQUEST_INTERVAL_SEC = 0.1
-
-    #headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36'}  # 서버에 내 신분을 속이기 위한 유저에이전트... 자세히는 잘 모릅니다
 
     time.sleep(REQUEST_INTERVAL_SEC)    # 먼저 0.1초 쉬고
 
@@ -85,13 +84,31 @@ def getGameIds():
                             resultlist.append(game_data)
         time.sleep(1)
     game_ids_df = pd.DataFrame(resultlist)
+    game_ids_df = game_ids_df.astype({"matchId":"str", "gameId":"str"})
     return game_ids_df
+
+def addPatch(gameId):
+    window_url = f"https://feed.lolesports.com/livestats/v1/window/{gameId}"
+    apiResult = requestWithHandlingHttperr(window_url)
+    if apiResult.status_code == 200:
+        json_data = apiResult.json()
+        if 'gameMetadata' in json_data and len(json_data['gameMetadata']) > 0:
+            game = json_data["gameMetadata"]
+            if game.get("patchVersion") is not None:
+                patch_ver = game["patchVersion"]
+                where = patch_ver.find(".")
+                patch_ver = patch_ver[:patch_ver[where+1:].find(".")+where+1] # [where+1:]부터 "."의 위치를 찾았으니까 인덱스가 예상한것보다 한 칸 앞으로 당겨져 있을것이므로 +1을 넣어 보정.
+                return patch_ver
+    return np.nan
 
 ######## 아래부턴 실행되는 부분 #######
 
+tqdm.pandas()
 result = []
 game_ids = getGameIds() # 게임아이디가 들어간 리스트
-for idx, row in tqdm(game_ids.iterrows(), total = 9293):
+game_ids["patch"] = game_ids.progress_apply(lambda row : addPatch(row["gameId"]), axis=1)
+"""
+for idx, row in tqdm(game_ids.iterrows(), total = game_ids.shape[0]):
     window_url = f"https://feed.lolesports.com/livestats/v1/window/{row["gameId"]}"
     apiResult = requestWithHandlingHttperr(window_url)
     if apiResult.status_code == 200:
@@ -110,5 +127,5 @@ for idx, row in tqdm(game_ids.iterrows(), total = 9293):
 result_df = pd.DataFrame(result)
 result_df = result_df.astype({"matchId":"str", "gameId":"str"})
 result_df.to_excel("../data/game_ids_with_patch.xlsx")
-
-# game_ids.to_excel("../data/game_ids.xlsx", index=None)
+"""
+game_ids.to_excel("../data/game_ids.xlsx", index=None)
