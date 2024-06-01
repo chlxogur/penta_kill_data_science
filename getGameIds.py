@@ -107,25 +107,4 @@ tqdm.pandas()
 result = []
 game_ids = getGameIds() # 게임아이디가 들어간 리스트
 game_ids["patch"] = game_ids.progress_apply(lambda row : addPatch(row["gameId"]), axis=1)
-"""
-for idx, row in tqdm(game_ids.iterrows(), total = game_ids.shape[0]):
-    window_url = f"https://feed.lolesports.com/livestats/v1/window/{row["gameId"]}"
-    apiResult = requestWithHandlingHttperr(window_url)
-    if apiResult.status_code == 200:
-        json_data = apiResult.json()
-        if 'gameMetadata' in json_data and len(json_data['gameMetadata']) > 0:
-            game = json_data["gameMetadata"]
-            if game.get("patchVersion") is not None:
-                patch_ver = game["patchVersion"]
-                where = patch_ver.find(".")
-                patch_ver = patch_ver[:patch_ver[where+1:].find(".")+where+1] # [where+1:]부터 "."의 위치를 찾았으니까 인덱스가 예상한것보다 한 칸 앞으로 당겨져 있을것이므로 +1을 넣어 보정.
-                row["patch"] = patch_ver
-            else:
-                row["patch"] = np.nan
-            result.append(row)
-
-result_df = pd.DataFrame(result)
-result_df = result_df.astype({"matchId":"str", "gameId":"str"})
-result_df.to_excel("../data/game_ids_with_patch.xlsx")
-"""
 game_ids.to_excel("../data/game_ids.xlsx", index=None)
