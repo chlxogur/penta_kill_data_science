@@ -193,7 +193,7 @@ def getParticipantInfo(game_id):
         return [str(game_id), apiResult.status_code]                # 비정상 응답이 온 game id를 리턴
     
 # try-except를 통해 서버로부터 10054에러가 떴을 때 잠시 기다렸다 재시도하는 루틴입니다.
-def requestWithHandlingHttperr(url):
+def requestWithHandlingHttperr(url, headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36'}):
     RETRY_COUNT = 12                # 기본 반복 12회
     RETRY_DELAY_SEC = 10            # 대기 10초
     ERRNO_10054 = 10054
@@ -202,8 +202,6 @@ def requestWithHandlingHttperr(url):
     ERRNO_504 = 504
 
     REQUEST_INTERVAL_SEC = 0.1
-
-    headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36'}  # 서버에 내 신분을 속이기 위한 유저에이전트... 자세히는 잘 모릅니다
 
     time.sleep(REQUEST_INTERVAL_SEC)    # 먼저 0.1초 쉬고
 
@@ -230,9 +228,9 @@ def requestWithHandlingHttperr(url):
                 time.sleep(RETRY_DELAY_SEC)
             else:  # 다른 HTTPError 예외 처리
                 raise
-    game_id = url[url.rfind("/") + 1:]
-    print(f"Failed to fetch data from game ID : {game_id} after {RETRY_COUNT} attempts.")
-    raise Exception(f"Failed to fetch data from game ID : {game_id} after {RETRY_COUNT} attempts")
+    # game_id = url[url.rfind("/") + 1:]
+    print(f"Failed to fetch data from url : {url} after {RETRY_COUNT} attempts.")
+    raise Exception(f"Failed to fetch data from url : {url} after {RETRY_COUNT} attempts")
 
 ###### 아래부턴 실행되는 부분 ######
 id_list = [0] # <- 요 부분에 원하는 숫자 넣고 돌리시면 됩니다.

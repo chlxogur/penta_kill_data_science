@@ -41,9 +41,9 @@ def requestWithHandlingHttperr(url, headers = {'user-agent': 'Mozilla/5.0 (Windo
                 time.sleep(RETRY_DELAY_SEC)
             else:  # 다른 HTTPError 예외 처리
                 raise
-    game_id = url[url.rfind("/") + 1:]
-    print(f"Failed to fetch data from game ID : {game_id} after {RETRY_COUNT} attempts.")
-    raise Exception(f"Failed to fetch data from game ID : {game_id} after {RETRY_COUNT} attempts")
+    # game_id = url[url.rfind("/") + 1:]
+    print(f"Failed to fetch data from url : {url} after {RETRY_COUNT} attempts.")
+    raise Exception(f"Failed to fetch data from url : {url} after {RETRY_COUNT} attempts")
 
 def getGameIds():
     headers = {
