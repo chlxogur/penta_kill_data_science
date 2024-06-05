@@ -95,7 +95,7 @@ def scrapInAPage(tournament_link):
                 row[f"ban_{idx + NUMBER_OF_PLAYERS_OF_A_TEAM}"] = ban.attrs["title"]
             for idx, pick in enumerate(data[7].find_all("span")):
                 row[f"pick_{idx}"] = pick.attrs["title"]
-            for idx, pick in enumerate(data[7].find_all("span")):
+            for idx, pick in enumerate(data[8].find_all("span")):
                 row[f"pick_{idx + NUMBER_OF_PLAYERS_OF_A_TEAM}"] = pick.attrs["title"]
             result.append(row)
     return pd.DataFrame(result)
