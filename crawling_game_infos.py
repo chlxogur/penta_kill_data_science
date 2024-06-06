@@ -8,6 +8,7 @@ import numpy as np
 import json
 
 NUMBER_OF_PLAYERS_OF_A_TEAM = 5
+team_code = {}
 
 def requestWithHandlingHttperr(url):
     RETRY_COUNT = 12                # 기본 반복 12회
@@ -72,6 +73,7 @@ def scrapInAPage(tournament_link):
             blueteam = data[2].find("img").attrs["alt"][:data[2].find("img").attrs["alt"].find("logo std")]
             redteam = data[3].find("img").attrs["alt"][:data[3].find("img").attrs["alt"].find("logo std")]
             winner = data[4].find("img").attrs["alt"][:data[4].find("img").attrs["alt"].find("logo std")]
+            
             if winner == blueteam: winner_side = "Blue"
             elif winner == redteam: winner_side = "Red"
             row = {
@@ -97,6 +99,11 @@ def scrapInAPage(tournament_link):
                 row[f"pick_{idx}"] = pick.attrs["title"]
             for idx, pick in enumerate(data[8].find_all("span")):
                 row[f"pick_{idx + NUMBER_OF_PLAYERS_OF_A_TEAM}"] = pick.attrs["title"]
+            for idx, summoner in enumerate(data[9].find_all("a")):
+                row[f"summonerName_{idx}"] = summoner.text
+            for idx, summoner in enumerate(data[10].find_all("a")):
+                row[f"summonerName_{idx + NUMBER_OF_PLAYERS_OF_A_TEAM}"] = summoner.text
+
             result.append(row)
     return pd.DataFrame(result)
 
