@@ -3,6 +3,7 @@ import requests
 import time
 from tqdm import tqdm, tqdm_pandas
 import numpy as np
+import os
 
 # get_game_detail.py에서 2024년 5월 31일에 복사, 이거 이러지말고 모듈화해서 import 하고 싶은데 get_game_detail.py에 main()부분이 없어야 하는 건가?
 # 06.02 headers를 인자로 받도록 수정
@@ -70,7 +71,7 @@ def getGameIds():
                                 "tournamentId" : str(tournament),
                                 "blockName" : event["blockName"],
                                 "leagueName": event["league"]["name"],
-                                "matchId": match["id"],
+                                "matchId": str(match["id"]),
                                 "bestof": match["strategy"]["count"],
                                 "blueteam_name" : blueteam["name"],
                                 "blueteam_code" : blueteam["code"],
@@ -79,7 +80,7 @@ def getGameIds():
                                 "redteam_code" : redteam["code"],
                                 "redteam_win" : redteam["result"]["gameWins"],
                                 "gameNumberInAMatch": idx,
-                                "gameId": game["id"]
+                                "gameId": str(game["id"])
                             }
                             resultlist.append(game_data)
         time.sleep(1)
@@ -101,10 +102,36 @@ def addPatch(gameId):
                 return patch_ver
     return np.nan
 
+def addPicksAndTeamCode(row):
+    PARTICIPANT_NUMBER_OF_A_TEAM = 5
+    gameId = row["gameId"]
+    
+    DETAIL_PATH = "../data/collected_data/"
+    file_list = os.listdir(DETAIL_PATH)
+    if gameId + ".xlsx" in file_list:
+        detail_data = pd.read_excel(DETAIL_PATH + gameId + ".xlsx")
+        for i in range(PARTICIPANT_NUMBER_OF_A_TEAM * 2):
+            row[f"pick_{i}"] = detail_data.at[0, f"championName_{i}"]
+        for j in range(PARTICIPANT_NUMBER_OF_A_TEAM * 2):
+            row[f"summonerName_{j}"] = detail_data.at[0, f"summonerName_{j}"]
+        row["teamcode_blue_on_detail"] = detail_data.at[0, "teamCode_0"]
+        row["teamcode_red_on_detail"] = detail_data.at[0, "teamCode_5"]
+    else:
+        for i in range(PARTICIPANT_NUMBER_OF_A_TEAM * 2):
+            row[f"pick_{i}"] = np.nan
+        for j in range(PARTICIPANT_NUMBER_OF_A_TEAM * 2):
+            row[f"summonerName_{j}"] = np.nan
+        row["teamcode_blue_on_detail"] = np.nan
+        row["teamcode_red_on_detail"] = np.nan
+    if len(row) != 37:
+        print(f"gameId: {gameId}, row length: {len(row)}")
+    return row
+
 ######## 아래부턴 실행되는 부분 #######
 
 tqdm.pandas()
-result = []
 game_ids = getGameIds() # 게임아이디가 들어간 리스트
+
 game_ids["patch"] = game_ids.progress_apply(lambda row : addPatch(row["gameId"]), axis=1)
+game_ids = game_ids.progress_apply(lambda row : addPicksAndTeamCode(row), axis = 1)
 game_ids.to_excel("../data/game_ids.xlsx", index=None)
