@@ -114,6 +114,8 @@ def addPicksAndTeamCode(row):
             row[f"pick_{i}"] = detail_data.at[0, f"championName_{i}"]
         for j in range(PARTICIPANT_NUMBER_OF_A_TEAM * 2):
             row[f"summonerName_{j}"] = detail_data.at[0, f"summonerName_{j}"]
+        for k in range(PARTICIPANT_NUMBER_OF_A_TEAM * 2):
+            row[f"esportsPlayerId_{k}"] = str(detail_data.at[0, f"esportsPlayerId_{k}"])
         row["teamcode_blue_on_detail"] = detail_data.at[0, "teamCode_0"]
         row["teamcode_red_on_detail"] = detail_data.at[0, "teamCode_5"]
     else:
@@ -121,9 +123,11 @@ def addPicksAndTeamCode(row):
             row[f"pick_{i}"] = np.nan
         for j in range(PARTICIPANT_NUMBER_OF_A_TEAM * 2):
             row[f"summonerName_{j}"] = np.nan
+        for k in range(PARTICIPANT_NUMBER_OF_A_TEAM * 2):
+            row[f"esportsPlayerId_{k}"] = np.nan
         row["teamcode_blue_on_detail"] = np.nan
         row["teamcode_red_on_detail"] = np.nan
-    if len(row) != 37:
+    if len(row) != 47:
         print(f"gameId: {gameId}, row length: {len(row)}")
     return row
 
