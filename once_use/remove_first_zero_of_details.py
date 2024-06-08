@@ -1,11 +1,11 @@
+ # 처음 다 0으로 나오는줄들 지우고 끝에 10초단위로 안끊기는 한 줄 지우고 하는 코드입니다.
 import os
 import pandas as pd
 import datetime
 from tqdm import tqdm
 import ast
 
-DETAIL_PATH = "../data/collected_game_data/"     # 처음 다 0으로 나오는줄들 지우고 끝에 10초단위로 안끊기는 한 줄 지우고
-NEW_PATH = "../data/collected_data/"
+DETAIL_PATH = "../data/collected_data/"
 file_list = os.listdir(DETAIL_PATH)
 
 for file_name in tqdm(file_list):
@@ -26,5 +26,5 @@ for file_name in tqdm(file_list):
         else:
             base_name = os.path.splitext(file_name)[0]  
             new_file_name = f"{base_name}_tooshort.xlsx"
-        full_path = os.path.join(NEW_PATH, new_file_name)
+        full_path = os.path.join(DETAIL_PATH, new_file_name)
         drop_weird_second_df.to_excel(full_path)
