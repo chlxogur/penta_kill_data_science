@@ -250,7 +250,6 @@ def seperateTeamNameFromSummonerName(df):
                 df[f"summonerName_{i+PARTICIPANTS_NUMBER_OF_A_TEAM}"] = df[f"summonerName_{i+PARTICIPANTS_NUMBER_OF_A_TEAM}"].apply(lambda x : x[redteamWhere:])
     return df
 
-        
 ###### 아래부턴 실행되는 부분 ######
 id_list = [0] # <- 요 부분에 원하는 숫자 넣고 돌리시면 됩니다.
 #TARGET_PATH = "../data/collected_data/"
@@ -292,7 +291,6 @@ for i in id_list:
                 playerinfo_list.append(playerinfo)
             playerinfo_df = pd.DataFrame(playerinfo_list)
             df = pd.concat([playerStatus, playerinfo_df], axis = 1)
-            print(df)
             df = seperateTeamNameFromSummonerName(df)
             df.to_excel(f'{TARGET_PATH}{game_id}.xlsx', index=False)
     #print(f"Collecting data from game_id_{i} is completed!")

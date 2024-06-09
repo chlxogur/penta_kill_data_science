@@ -1,3 +1,5 @@
+# 수정이 필요하다. pick_last_row_of_collected_datas.py를 통해 각 디테일의 마지막 줄을 쭉 불러온 데이터가 있으니 매번 collected_data안에서 read_excel을 할 필요가 없다.
+
 import pandas as pd
 from tqdm import tqdm, tqdm_pandas
 import numpy as np
