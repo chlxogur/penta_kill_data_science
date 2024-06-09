@@ -250,6 +250,21 @@ def seperateTeamNameFromSummonerName(df):
                 df[f"summonerName_{i+PARTICIPANTS_NUMBER_OF_A_TEAM}"] = df[f"summonerName_{i+PARTICIPANTS_NUMBER_OF_A_TEAM}"].apply(lambda x : x[redteamWhere:])
     return df
 
+def removeAbnormalRows(df):
+    df = df.astype({"esportsTeamId_Blue":"str", "esportsTeamId_Red":"str", "blue_dragons":"str", "red_dragons":"str",\
+        "esportsPlayerId_0":"str", "esportsPlayerId_1":"str", "esportsPlayerId_2":"str", "esportsPlayerId_3":"str", "esportsPlayerId_4":"str",\
+            "esportsPlayerId_5":"str", "esportsPlayerId_6":"str", "esportsPlayerId_7":"str", "esportsPlayerId_8":"str", "esportsPlayerId_9":"str"})
+    df["timestamp"] = df["timestamp"].apply(lambda x : datetime.datetime.strptime(x[:19], "%Y-%m-%dT%H:%M:%S"))
+    blue_dragons_count = df["blue_dragons"].apply(lambda x : len(ast.literal_eval(x)))
+    df = pd.concat([df, blue_dragons_count.rename("blue_dragons_count")], axis=1)
+    red_dragons_count = df["red_dragons"].apply(lambda x : len(ast.literal_eval(x)))
+    df = pd.concat([df, red_dragons_count.rename("red_dragons_count")], axis=1)
+    df = df.copy()
+    non_zero_df = df[df["totalGoldEarned_0"] != 0]
+    drop_weird_second_df = non_zero_df[non_zero_df["timestamp"].dt.second % 10 == 0].reset_index(drop = True)
+    drop_weird_second_df["duration"] = drop_weird_second_df.index * 10
+    return drop_weird_second_df
+
 ###### 아래부턴 실행되는 부분 ######
 id_list = [0] # <- 요 부분에 원하는 숫자 넣고 돌리시면 됩니다.
 #TARGET_PATH = "../data/collected_data/"
@@ -292,5 +307,9 @@ for i in id_list:
             playerinfo_df = pd.DataFrame(playerinfo_list)
             df = pd.concat([playerStatus, playerinfo_df], axis = 1)
             df = seperateTeamNameFromSummonerName(df)
-            df.to_excel(f'{TARGET_PATH}{game_id}.xlsx', index=False)
+            df = removeAbnormalRows(df)
+            if df.iloc[-1]["duration"] > 600: # 10분이내 끝난 경기는 제외함.
+                df.to_excel(f'{TARGET_PATH}{game_id}.xlsx', index=False)   
+            else:
+                df.to_excel(f'{TARGET_PATH}{game_id}_tooshort.xlsx', index=False)
     #print(f"Collecting data from game_id_{i} is completed!")
