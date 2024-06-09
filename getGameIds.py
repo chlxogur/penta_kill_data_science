@@ -1,50 +1,9 @@
 import pandas as pd
-import requests
 import time
 from tqdm import tqdm, tqdm_pandas
 import numpy as np
 import os
-
-# get_game_detail.py에서 2024년 5월 31일에 복사, 이거 이러지말고 모듈화해서 import 하고 싶은데 get_game_detail.py에 main()부분이 없어야 하는 건가?
-# 06.02 headers를 인자로 받도록 수정
-def requestWithHandlingHttperr(url, headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36'}):
-    RETRY_COUNT = 12                # 기본 반복 12회
-    RETRY_DELAY_SEC = 10            # 대기 10초
-    ERRNO_10054 = 10054
-    ERRNO_500 = 500
-    ERRNO_503 = 503
-    ERRNO_504 = 504
-
-    REQUEST_INTERVAL_SEC = 0.1
-
-    time.sleep(REQUEST_INTERVAL_SEC)    # 먼저 0.1초 쉬고
-
-    for i in range(RETRY_COUNT):
-        try:
-            result = requests.get(url, headers = headers)       # API에 request 요청
-            result.raise_for_status()                           # http에러가 나오면 예외를 발생시킴 -> except로 점프
-            return result
-        except requests.exceptions.ConnectionError as e:
-            if isinstance(e.args[0], ConnectionResetError) and e.args[0].winerror == ERRNO_10054:
-                print(f"Attempt {i + 1} failed with error 10054. Retrying in {RETRY_DELAY_SEC} seconds...")
-                time.sleep(RETRY_DELAY_SEC)
-            else:                           # 다른 http 에러면
-                raise
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == ERRNO_500:
-                print(f"Attempt {i + 1} failed with 500 Internal Server Error. Retrying in {RETRY_DELAY_SEC} seconds...")
-                time.sleep(RETRY_DELAY_SEC)
-            elif e.response.status_code == ERRNO_503:
-                print(f"Attempt {i + 1} failed with 503 Service Unavailable. Retrying in {RETRY_DELAY_SEC} seconds...")
-                time.sleep(RETRY_DELAY_SEC)
-            elif e.response.status_code == ERRNO_504:
-                print(f"Attempt {i + 1} failed with 504 Gateway Timeout. Retrying in {RETRY_DELAY_SEC} seconds...")
-                time.sleep(RETRY_DELAY_SEC)
-            else:  # 다른 HTTPError 예외 처리
-                raise
-    # game_id = url[url.rfind("/") + 1:]
-    print(f"Failed to fetch data from url : {url} after {RETRY_COUNT} attempts.")
-    raise Exception(f"Failed to fetch data from url : {url} after {RETRY_COUNT} attempts")
+from requestWithHandlingHttperr import requestWithHandlingHttperr
 
 def getGameIds():
     headers = {
@@ -52,7 +11,8 @@ def getGameIds():
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36'
     }
     resultlist = []
-    tournaments = pd.read_excel("../data/pentakill 경기 상세데이터 수집기록.xlsx", sheet_name= "경기 세부 링크")["id"]
+    # tournaments = pd.read_excel("../data/pentakill 경기 상세데이터 수집기록.xlsx", sheet_name= "경기 세부 링크")["id"] # 본 데이터
+    tournaments = pd.read_excel("../data/target_tournament_for_test.xlsx")["id"]        # 테스트 데이터 토너먼트 자료
     for tournament in tqdm(tournaments):
         apiResult = requestWithHandlingHttperr(f"https://prod-relapi.ewp.gg/persisted/gw/getCompletedEvents?hl=en-US&tournamentId={tournament}", headers=headers)
         if apiResult.status_code == 200:
@@ -101,7 +61,7 @@ def addPatch(gameId):
                 patch_ver = patch_ver[:patch_ver[where+1:].find(".")+where+1] # [where+1:]부터 "."의 위치를 찾았으니까 인덱스가 예상한것보다 한 칸 앞으로 당겨져 있을것이므로 +1을 넣어 보정.
                 return patch_ver
     return np.nan
-
+"""
 def addPicksAndTeamCode(row):
     PARTICIPANT_NUMBER_OF_A_TEAM = 5
     gameId = row["gameId"]
@@ -130,12 +90,14 @@ def addPicksAndTeamCode(row):
     if len(row) != 47:
         print(f"gameId: {gameId}, row length: {len(row)}")
     return row
-
+"""
 ######## 아래부턴 실행되는 부분 #######
 
 tqdm.pandas()
 game_ids = getGameIds() # 게임아이디가 들어간 리스트
 
 game_ids["patch"] = game_ids.progress_apply(lambda row : addPatch(row["gameId"]), axis=1)
-game_ids = game_ids.progress_apply(lambda row : addPicksAndTeamCode(row), axis = 1)
-game_ids.to_excel("../data/game_ids.xlsx", index=None)
+#game_ids = game_ids.progress_apply(lambda row : addPicksAndTeamCode(row), axis = 1)
+
+#game_ids.to_excel("../data/game_ids.xlsx", index=None)     # 본 데이터 뽑을 때
+game_ids.to_excel("../data/game_ids_for_test.xlsx", index=None) # 테스트 데이터 뽑을 때
