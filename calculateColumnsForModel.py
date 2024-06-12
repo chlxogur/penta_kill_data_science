@@ -1,3 +1,6 @@
+import pandas as pd
+from tqdm import tqdm, tqdm_pandas
+
 def numberToRoleName(number):
     if number == 0 or number == 5:
         return "Top"
@@ -40,34 +43,15 @@ def calculateColumnsForModel(row):
         row[f"goldEarnedPerTimeof{numberToRoleName(i)}"] = (row[f"goldEarnedPerTime_{i}"] + row[f"goldEarnedPerTime_{i + PARTICIPANTS_NUMBER_OF_A_TEAM}"]) / 2
     return row
 
-"""   
-def calculateColumnsForModel(row, flag):
-    PARTICIPANTS_NUMBER_OF_A_TEAM = 5
-    for i in range(PARTICIPANTS_NUMBER_OF_A_TEAM):
-        kills = row[f"kills_{i}"]
-        deaths = row[f"deaths_{i}"]
-        assists = row[f"assists_{i}"]
-        if deaths == 0:                         
-            kda_blue = (kills + assists) * 1.2   # LCK에서는 노데스로 끝난 선수에게는 1데스시 kda의 1.2배를 곱한 값을 kda로 표시해주고 있다.
-        else:
-            kda_blue = (kills + assists) / deaths
-        kills = row[f"kills_{i + PARTICIPANTS_NUMBER_OF_A_TEAM}"]
-        deaths = row[f"deaths_{i + PARTICIPANTS_NUMBER_OF_A_TEAM}"]
-        assists = row[f"assists_{i + PARTICIPANTS_NUMBER_OF_A_TEAM}"]
-        if deaths == 0:                         
-            kda_red = (kills + assists) * 1.2   # LCK에서는 노데스로 끝난 선수에게는 1데스시 kda의 1.2배를 곱한 값을 kda로 표시해주고 있다.
-        else:
-            kda_red = (kills + assists) / deaths
-        row[f"kdaof{numberToRoleName(i)}"] = (kda_blue + kda_red) / 2
-
-        row[f"championDamageShareByRoleof{numberToRoleName(i)}"] = (row[f"championDamageShare_{i}"] + row[f"championDamageShare_{i + PARTICIPANTS_NUMBER_OF_A_TEAM}"]) / 2
-        creepScore = (row[f"creepScore_{i}"] + row[f"creepScore_{i + PARTICIPANTS_NUMBER_OF_A_TEAM}"]) / 2
-        row[f"creepScorePerTimeof{numberToRoleName(i)}"] = creepScore / row["duration"]
-        wardsPlaced = (row[f"wardsPlaced_{i}"] + row[f"wardsPlaced_{i + PARTICIPANTS_NUMBER_OF_A_TEAM}"]) / 2
-        wardsPlacedScore = wardsPlaced * 1.5        # 공식 시야점수를 계산하는 계산식에서는 와드를 놓은 게 와드를 지운 것보다 더 중요하다고 한다.
-        wardsDestroyed = (row[f"wardsDestroyed_{i}"] + row[f"wardsDestroyed_{i + PARTICIPANTS_NUMBER_OF_A_TEAM}"]) / 2
-        row[f"wardsScorePerTimeof{numberToRoleName(i)}"] = (wardsPlacedScore + wardsDestroyed) / row["duration"]
-        goldEarned = (row[f"totalGoldEarned_{i}"] + row[f"totalGoldEarned_{i + PARTICIPANTS_NUMBER_OF_A_TEAM}"]) / 2
-        row[f"goldEarnedPerTimeof{numberToRoleName(i)}"] = goldEarned / row["duration"]
-    return row
-"""
+def getAvgOfCollectedData():
+    strcolumn_dict = {"gameId":"str", "esportsTeamId_Blue":"str", "esportsTeamId_Red":"str"}
+    temp1 = [f"esportsPlayerId_{i}" for i in range(10)]
+    temp2 = ["str" for i in range(10)]
+    esportsPlayerId_type_dict = dict(zip(temp1, temp2))
+    strcolumn_dict.update(esportsPlayerId_type_dict)
+    df = pd.read_excel("../data/last_row_of_collected_datas.xlsx", dtype = strcolumn_dict)
+    tqdm.pandas()
+    new_df = df.progress_apply(lambda row : calculateColumnsForModel(row), axis=1)
+    avgs = new_df.describe().loc["mean"][new_df.describe().shape[1] - 25:]
+    #avgs.to_excel("../data/average_of_collected_datas.xlsx")
+    return avgs
