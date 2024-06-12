@@ -13,7 +13,7 @@ def numberToRoleName(number):
     else:
         return "Spt"
 
-def calculateColumnsForModel(row):
+def calculateColumnsForModel(row): # last_row_of_collected_data.xlsx의 각 줄을 입력받아 추가정보를 반환합니다.
     PARTICIPANTS_NUMBER_OF_A_TEAM = 5
     for i in range(PARTICIPANTS_NUMBER_OF_A_TEAM * 2):
         kills = row[f"kills_{i}"]
@@ -37,13 +37,13 @@ def calculateColumnsForModel(row):
         row[f"goldEarnedPerTime_{i}"] = row[f"totalGoldEarned_{i}"] / row["duration"]
     for i in range(PARTICIPANTS_NUMBER_OF_A_TEAM):
         row[f"kdaof{numberToRoleName(i)}"] = (row[f"kda_{i}"] + row[f"kda_{i + PARTICIPANTS_NUMBER_OF_A_TEAM}"]) / 2
-        row[f"championDamageShareByRoleof{numberToRoleName(i)}"] = (row[f"championDamageShare_{i}"] + row[f"championDamageShare_{i + PARTICIPANTS_NUMBER_OF_A_TEAM}"]) / 2
+        row[f"championDamageShareof{numberToRoleName(i)}"] = (row[f"championDamageShare_{i}"] + row[f"championDamageShare_{i + PARTICIPANTS_NUMBER_OF_A_TEAM}"]) / 2
         row[f"creepScorePerTimeof{numberToRoleName(i)}"] = (row[f"creepScorePerTime_{i}"] + row[f"creepScorePerTime_{i + PARTICIPANTS_NUMBER_OF_A_TEAM}"]) / 2
         row[f"wardsScorePerTimeof{numberToRoleName(i)}"] = (row[f"wardsScorePerTime_{i}"] + row[f"wardsScorePerTime_{i + PARTICIPANTS_NUMBER_OF_A_TEAM}"]) / 2
         row[f"goldEarnedPerTimeof{numberToRoleName(i)}"] = (row[f"goldEarnedPerTime_{i}"] + row[f"goldEarnedPerTime_{i + PARTICIPANTS_NUMBER_OF_A_TEAM}"]) / 2
     return row
 
-def getAvgOfCollectedData():
+def getAvgOfCollectedData(): # 미리 저장된 파일을 불러와서 시리즈 형태로 포지션 별 평균을 내보낸다.
     strcolumn_dict = {"gameId":"str", "esportsTeamId_Blue":"str", "esportsTeamId_Red":"str"}
     temp1 = [f"esportsPlayerId_{i}" for i in range(10)]
     temp2 = ["str" for i in range(10)]
