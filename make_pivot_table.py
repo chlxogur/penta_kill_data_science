@@ -1,3 +1,10 @@
+import pandas as pd
+import os
+from datetime import datetime, timedelta
+import numpy as np
+from tqdm import tqdm
+from calculateColumnsForModel import calculateColumnsForModel, getAvgOfCollectedData, numberToRoleName
+
 # 나중에 현재기준 테이블 만들때는 row안에 데이터를 직접 넣고 가장 겉의 for문 하나 제거하고 뚝딱뚝딱 돌리면 되겠지 ㅎㅎ
 # 대신 앞에 last_row_of 저건 읽어와야한다. 반복문에서 하나하나읽지않고 한번 읽고 끝내는 것이 스피드를 위해 핵심.
 
