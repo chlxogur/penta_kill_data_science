@@ -48,17 +48,18 @@ past_games_df = included_all_ids_df_sorted.iloc[1:,:]
 team_winrate_dict = {}
 headtohead_winrate_dict = {}
 for team_id in team_Ids_list:
-    team_wincount = 0
+    team_wincount = 1
+    subrow_count = 0
     target_game = past_games_df[past_games_df["esportsTeamId_Blue"] == team_id | past_games_df["esportsTeamId_Red"] == team_id]
     for idx, row in target_game.iterrows():
         if last_game_time - row["startTime(match)"] > timedelta(days=365):      # 최근 1년 경기가 아니면
             break
         else:
+            subrow_count += 1
             if ((row["esportsTeamId_Blue"] == team_id) & (row["winner_side"] == "Blue")) | ((row["esportsTeamId_Red"] == team_id) & (row["winner_side"] == "Red")):
                 team_wincount += 1
-    team_wincount += 1
-    team_winrate = team_wincount / (target_game.shape[0] + 2)
-    team_winrate_dict.update({team_id : team_winrate})
+    team_winrate = team_wincount / (subrow_count + 2)
+    team_winrate_dict.update({team_id: {"self": team_winrate}})
     for opposite_team_id in team_Ids_list:
         particular_winrate_dict = {}
         if opposite_team_id == team_id:
@@ -67,13 +68,18 @@ for team_id in team_Ids_list:
             target_games = past_games_df[((past_games_df["esportsTeamId_Blue"] == team_id) & (past_games_df["esportsTeamId_Red"] == opposite_team_id)) |
                                         ((past_games_df["esportsTeamId_Red"] == team_id) & (past_games_df["esportsTeamId_Blue"] == opposite_team_id))
                                         ]
-            particular_wincount = 0
+            particular_wincount = 1
+            particular_subrow_count = 0
             for idx, row in target_games.iterrow():
                 if last_game_time - row["startTime(match)"] > timedelta(days=365):
                     break
                 else:
+                    particular_subrow_count += 1
                     if ((row["esportsTeamId_Blue"] == team_id) & (row["esportsTeamId_Red"] == opposite_team_id)) & (row["winner_side"] == "Blue"):
                         particular_wincount += 1
                     elif ((row["esportsTeamId_Red"] == team_id) & (row["esportsTeamId_Blue"] == opposite_team_id)) & (row["winner_side"] == "Red"):
                         particular_wincount += 1
+            particular_winrate = particular_wincount / (particular_subrow_count + 2)
+            team_winrate_dict.update({team_id: {opposite_team_id : particular_winrate}})
+
                         
