@@ -3,6 +3,7 @@ import os
 from datetime import datetime, timedelta
 import numpy as np
 from tqdm import tqdm
+import pickle
 from calculateColumnsForModel import calculateColumnsForModel, getAvgOfCollectedData, numberToRoleName
 
 PARTICIPANT_NUMBER_OF_A_TEAM = 5
@@ -59,7 +60,7 @@ for team_id in tqdm(team_Ids_list):
             if ((row["esportsTeamId_Blue"] == team_id) & (row["winner_side"] == "Blue")) | ((row["esportsTeamId_Red"] == team_id) & (row["winner_side"] == "Red")):
                 team_wincount += 1
     team_winrate = team_wincount / (subrow_count + 2)
-    team_winrate_dict.update({team_id: {"self": team_winrate}})
+    team_winrate_dict[team_id].update{"self": team_winrate})
     for opposite_team_id in team_Ids_list:
         particular_winrate_dict = {}
         if opposite_team_id == team_id:
@@ -80,7 +81,7 @@ for team_id in tqdm(team_Ids_list):
                     elif ((row["esportsTeamId_Red"] == team_id) & (row["esportsTeamId_Blue"] == opposite_team_id)) & (row["winner_side"] == "Red"):
                         particular_wincount += 1
             particular_winrate = particular_wincount / (particular_subrow_count + 2)
-            team_winrate_dict.update({team_id: {opposite_team_id : particular_winrate}})
+            team_winrate_dict[team_id].update(opposite_team_id : particular_winrate)
         
 ##### 아래는 선수별 최근 n경기 스탯을 통해 폼을 뽑아내는 코드 #####
 desired_labels = [f'esportsPlayerId_{j}' for j in range(PARTICIPANT_NUMBER_OF_A_TEAM * 2)]
@@ -131,5 +132,5 @@ data_dict = {
     "player_form" : player_form_dict
 }
 
-
-            
+with open('../data/present_data.pkl', 'wb') as f:
+    pickle.dump(data_dict, f)
