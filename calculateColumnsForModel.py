@@ -43,7 +43,7 @@ def calculateColumnsForModel(row): # last_row_of_collected_data.xlsx의 각 줄�
         row[f"goldEarnedPerTimeof{numberToRoleName(i)}"] = (row[f"goldEarnedPerTime_{i}"] + row[f"goldEarnedPerTime_{i + PARTICIPANTS_NUMBER_OF_A_TEAM}"]) / 2
     return row
 
-def getAvgOfCollectedData(): # 미리 저장된 파일을 불러와서 시리즈 형태로 포지션 별 평균을 내보낸다.
+def getMedianOfCollectedData(): # 미리 저장된 파일을 불러와서 시리즈 형태로 포지션 별 중간값을 내보낸다
     strcolumn_dict = {"gameId":"str", "esportsTeamId_Blue":"str", "esportsTeamId_Red":"str"}
     temp1 = [f"esportsPlayerId_{i}" for i in range(10)]
     temp2 = ["str" for i in range(10)]
@@ -53,5 +53,7 @@ def getAvgOfCollectedData(): # 미리 저장된 파일을 불러와서 시리즈
     tqdm.pandas()
     new_df = df.progress_apply(lambda row : calculateColumnsForModel(row), axis=1)
     avgs = new_df.describe().loc["mean"][new_df.describe().shape[1] - 25:]
-    #avgs.to_excel("../data/average_of_collected_datas.xlsx")
+    desired_columns_of_new_df = new_df.iloc[:, -25:]
+    medians = desired_columns_of_new_df.median()[-25:]
+    #medians.to_excel("../data/median_of_collected_datas.xlsx")
     return avgs
