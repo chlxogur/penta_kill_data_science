@@ -10,7 +10,7 @@ PARTICIPANT_NUMBER_OF_A_TEAM = 5
 RANGE_OF_RECENT_GAME = 10
 YEAR_DAYS = 365
 HALF_OF_YEAR_DAYS = 183      # 2월 안껴있으면 대체로 맞을듯?
-STAT_MEDIAN_MULTIPLIER = 0.9
+STAT_MEDIAN_MULTIPLIER = 0.7
 participant_ids_by_role = []
 team_Ids_list = []
 DETAIL_PATH = "../data/collected_data/"
@@ -60,7 +60,7 @@ for team_id in tqdm(team_Ids_list):
     target_games = past_games_df[(past_games_df["esportsTeamId_Blue"] == team_id) | (past_games_df["esportsTeamId_Red"] == team_id)]
     for idx, row in target_games.iterrows():
         target_game_detail = last_row_of_collected_datas_df[last_row_of_collected_datas_df["gameId"] == row["gameId"]].T.squeeze()
-        if last_game_time - row["startTime(match)"] > timedelta(days=HALF_OF_YEAR_DAYS):      # 최근 반년 경기가 아니면
+        if (last_game_time - row["startTime(match)"]) > timedelta(days=YEAR_DAYS):      # 최근 1년 경기가 아니면
             break
         else:
             subrow_count += 1
@@ -104,7 +104,7 @@ for team_id in tqdm(team_Ids_list):
             particular_killdiff_sum = 0
             for idx, row in target_games.iterrows():
                 target_game_detail = last_row_of_collected_datas_df[last_row_of_collected_datas_df["gameId"] == row["gameId"]].T.squeeze()
-                if last_game_time - row["startTime(match)"] > timedelta(days=HALF_OF_YEAR_DAYS):
+                if (particular_subrow_count > RANGE_OF_RECENT_GAME) and (last_game_time - row["startTime(match)"] > timedelta(days=YEAR_DAYS)):
                     break
                 else:
                     particular_subrow_count += 1
