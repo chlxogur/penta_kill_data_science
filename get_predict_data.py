@@ -1,4 +1,8 @@
 import pickle
+import pandas as pd
+from calculateColumnsForModel import numberToRoleName
+from pitcheranalyze import pitcheranalyze
+import joblib
 
 def getMedian(role):
     role = role % 5
@@ -60,8 +64,12 @@ def getMedian(role):
     return median
 
 def getPredictData(match):
+    PITCHERS_NUMBER_OF_A_PLAYER = 8         # 플레이어 스탯 갯수
+    players_form_df = None
+    STAT_MEDIAN_MULTIPLIER = 0.7
     with open('../data/present_data.pkl', 'rb') as f:
         present_data = pickle.load(f)
+    model, scaler, X_columns = joblib.load('../data/model_draft5_2_1.pkl')
     teams = match["teams"]
     blueteam = teams[0]
     redteam = teams[1]
@@ -77,14 +85,14 @@ def getPredictData(match):
         blue_winrate = 0.5
         blue_golddiff = 0
         blue_killdiff = 0
-        if present_data["team_history"][blueteam_id][redteam_id] is not None:
-            headtohead_winrate = present_data['team_history'][blueteam_id][redteam_id]["winrate"]
-            headtohead_golddiff = present_data['team_history'][blueteam_id][redteam_id]["golddiff"]
-            headtohead_killdiff = present_data['team_history'][blueteam_id][redteam_id]["killdiff"]
-        else:
-            headtohead_winrate = 0.5
-            headtohead_golddiff = 0
-            headtohead_killdiff = 0
+    if present_data["team_history"][blueteam_id][redteam_id] is not None:
+        headtohead_winrate = present_data['team_history'][blueteam_id][redteam_id]["winrate"]
+        headtohead_golddiff = present_data['team_history'][blueteam_id][redteam_id]["golddiff"]
+        headtohead_killdiff = present_data['team_history'][blueteam_id][redteam_id]["killdiff"]
+    else:
+        headtohead_winrate = 0.5
+        headtohead_golddiff = 0
+        headtohead_killdiff = 0
     if present_data["team_history"][redteam_id] is not None:
         red_winrate = present_data['team_history'][redteam_id]["self"]["winrate"]
         red_golddiff = present_data['team_history'][redteam_id]["self"]["golddiff"]
@@ -93,8 +101,76 @@ def getPredictData(match):
         red_winrate = 0.5
         red_golddiff = 0
         red_killdiff = 0
-    team_winrate_diff = blue_winrate - red_winrate
-    team_golddiff = blue_golddiff - red_golddiff
-    team_killdiff = blue_killdiff - red_killdiff
-    
-    
+    #team_winrate_diff = blue_winrate - red_winrate
+    #team_golddiff = blue_golddiff - red_golddiff
+    #team_killdiff = blue_killdiff - red_killdiff
+    columns_of_role = []
+    for i in range(2):  # 블루팀과 레드팀 2개
+        columns_of_role.extend(["Top" for j in range(PITCHERS_NUMBER_OF_A_PLAYER)])
+        columns_of_role.extend(["Jgl" for j in range(PITCHERS_NUMBER_OF_A_PLAYER)])
+        columns_of_role.extend(["Mid" for j in range(PITCHERS_NUMBER_OF_A_PLAYER)])
+        columns_of_role.extend(["Adc" for j in range(PITCHERS_NUMBER_OF_A_PLAYER)])
+        columns_of_role.extend(["Spt" for j in range(PITCHERS_NUMBER_OF_A_PLAYER)])
+    columns_of_each_team_side = ["Blue" for i in range(PITCHERS_NUMBER_OF_A_PLAYER * 5)]
+    columns_of_each_team_side.extend(["Red" for i in range(PITCHERS_NUMBER_OF_A_PLAYER * 5)])
+    matchid_extended = [match["matchId"] for i in range(PITCHERS_NUMBER_OF_A_PLAYER * 5 * 2)]
+    columns_dict = {
+        "matchId" : matchid_extended,
+        "side" : columns_of_each_team_side,
+        "role" : columns_of_role
+    }
+    columns_df = pd.DataFrame(columns_dict)
+    for idx, player in enumerate(blueteam_players):
+        player_id = player["esportsPlayerId"]
+        if present_data["player_form"][numberToRoleName(idx)][player_id] is not None:
+            player_form = present_data["player_form"][numberToRoleName(idx)][player_id]
+        else:
+            median_player_dict = getMedian(idx)
+            player_form = pd.DataFrame(median_player_dict, index=[0]).T
+            player_form.reset_index(inplace = True)
+            player_form.columns = ["elements", "formvalue"]
+            #print(player_form)
+        if players_form_df is None:
+            players_form_df = player_form
+        else:
+            players_form_df = pd.concat([players_form_df, player_form], ignore_index = True)
+    for idx, player in enumerate(redteam_players):
+        player_id = player["esportsPlayerId"]
+        if present_data["player_form"][numberToRoleName(idx)][player_id] is not None:
+            player_form = present_data["player_form"][numberToRoleName(idx)][player_id]
+        else:
+            median_player_dict = getMedian(idx)
+            player_form = pd.DataFrame(median_player_dict, index=[0]).T
+            player_form.reset_index(inplace = True)
+            player_form.columns = ["elements", "formvalue"]
+            #print(player_form)
+        if players_form_df is None:
+            players_form_df = player_form
+        else:
+            players_form_df = pd.concat([players_form_df, player_form], ignore_index = True)
+    players_form_df = pd.concat([columns_df, players_form_df], axis=1, ignore_index=True)
+    players_form_df.columns = ["matchId", "side", "role", "elements", "formvalue"]
+    players_form_df = pd.pivot_table(
+        players_form_df,
+        values="formvalue",
+        index=["matchId"],
+        columns=["side", "role", "elements"]
+    ).reset_index()
+    players_form_df.columns = ['_'.join(col) if isinstance(col, tuple) else col for col in players_form_df.columns]
+    players_form_df["Blue_Winrate"] = blue_winrate
+    players_form_df["Blue_GoldDiff"] = blue_golddiff
+    players_form_df["Blue_KillDiff"] = blue_killdiff
+    players_form_df["Red_Winrate"] = red_winrate
+    players_form_df["Red_GoldDiff"] = red_golddiff
+    players_form_df["Red_KillDiff"] = red_killdiff
+    players_form_df["headtoHeadWinrate"] = headtohead_winrate
+    players_form_df["headtoHeadGoldDiff"] = headtohead_golddiff
+    players_form_df["headtoHeadKillDiff"] = headtohead_killdiff
+    players_form_df.rename(columns = {"matchId__" : "matchId"}, inplace = True)
+    #print(players_form_df.info())
+    players_form_df = pitcheranalyze(players_form_df)
+    players_form_df = players_form_df.drop(["matchId"], axis=1)
+    players_form_df = players_form_df[X_columns]
+    players_form_df = scaler.transform(players_form_df)
+    predict = model.predict_proba(players_form_df)
+    return predict
