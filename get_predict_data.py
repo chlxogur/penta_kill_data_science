@@ -122,7 +122,7 @@ def getPredictData(match):
         if present_data["player_form"][numberToRoleName(idx)][player_id] is not None:
             player_form = present_data["player_form"][numberToRoleName(idx)][player_id]
         else:
-            median_player_dict = getMedian(idx)
+            median_player_dict = {key: value * STAT_MEDIAN_MULTIPLIER for key, value in getMedian(idx).items}
             player_form = pd.DataFrame(median_player_dict, index=[0]).T
             player_form.reset_index(inplace = True)
             player_form.columns = ["elements", "formvalue"]
