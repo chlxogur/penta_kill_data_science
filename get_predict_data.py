@@ -1,4 +1,3 @@
-import pickle
 import pandas as pd
 from calculateColumnsForModel import numberToRoleName
 from pitcheranalyze import pitcheranalyze
@@ -67,9 +66,8 @@ def getPredictData(match):
     PITCHERS_NUMBER_OF_A_PLAYER = 8         # 플레이어 스탯 갯수
     players_form_df = None
     STAT_MEDIAN_MULTIPLIER = 0.7
-    with open('../data/present_data.pkl', 'rb') as f:
-        present_data = pickle.load(f)
-    model, scaler, X_columns = joblib.load('../data/model_draft5_2_1.pkl')
+    present_data = joblib.load('../data/present_data.pkl')
+    model, scaler, X_columns = joblib.load('../data/model_draft5_5_1.pkl')
     teams = match["teams"]
     blueteam = teams[0]
     redteam = teams[1]
@@ -126,7 +124,6 @@ def getPredictData(match):
             player_form = pd.DataFrame(median_player_dict, index=[0]).T
             player_form.reset_index(inplace = True)
             player_form.columns = ["elements", "formvalue"]
-            #print(player_form)
         if players_form_df is None:
             players_form_df = player_form
         else:
@@ -140,7 +137,6 @@ def getPredictData(match):
             player_form = pd.DataFrame(median_player_dict, index=[0]).T
             player_form.reset_index(inplace = True)
             player_form.columns = ["elements", "formvalue"]
-            #print(player_form)
         if players_form_df is None:
             players_form_df = player_form
         else:
@@ -164,10 +160,18 @@ def getPredictData(match):
     players_form_df["headtoHeadGoldDiff"] = headtohead_golddiff
     players_form_df["headtoHeadKillDiff"] = headtohead_killdiff
     players_form_df.rename(columns = {"matchId__" : "matchId"}, inplace = True)
-    #print(players_form_df.info())
     players_form_df = pitcheranalyze(players_form_df)
     players_form_df = players_form_df.drop(["matchId"], axis=1)
     players_form_df = players_form_df[X_columns]
-    players_form_df = scaler.transform(players_form_df)
+    for column in players_form_df.columns:
+        if column.find("_") != -1:
+            suffix = column.split("_")[-1]
+            players_form_df[column] = scaler[suffix].transform(players_form_df[column].values.reshape(-1, 1))
+    players_form_df["headtoHeadWinrate"] = scaler["headtoHeadWinrate"].transform(players_form_df["headtoHeadWinrate"].values.reshape(-1, 1))
+    players_form_df["headtoHeadGoldDiff"] = scaler["headtoHeadGoldDiff"].transform(players_form_df["headtoHeadGoldDiff"].values.reshape(-1, 1))
+    players_form_df["headtoHeadKillDiff"] = scaler["headtoHeadKillDiff"].transform(players_form_df["headtoHeadKillDiff"].values.reshape(-1, 1))
+    players_form_df["teamWinrateDiff"] = scaler["teamWinrateDiff"].transform(players_form_df["teamWinrateDiff"].values.reshape(-1, 1))
+    players_form_df["teamGoldDiff"] = scaler["teamGoldDiff"].transform(players_form_df["teamGoldDiff"].values.reshape(-1, 1))
+    players_form_df["teamKillDiff"] = scaler["teamKillDiff"].transform(players_form_df["teamKillDiff"].values.reshape(-1, 1))
     predict = model.predict_proba(players_form_df)
     return predict
