@@ -198,18 +198,14 @@ def getPredictData(match):
 
 def format_prediction_result(result):
     return {
-        "0": {
-            "team1": {
-                "win_rate": round(result[0][0] * 100, 2)
-            },
-            "team2": {
-                "win_rate": round(result[0][1] * 100, 2)
-            }
+        "team1": {
+            "win_rate": round(result[0][0] * 100, 2)
+        },
+        "team2": {
+            "win_rate": round(result[0][1] * 100, 2)
         }
     }
 
-
-# 예측 API 엔드포인트
 @app.route('/predict', methods=['POST'])
 def predict_endpoint():
     input_data = request.json
@@ -217,15 +213,12 @@ def predict_endpoint():
         print("No JSON data received or failed to decode JSON object")
         return jsonify({"error": "No JSON data received or failed to decode JSON object"}), 400
     try:
-        # 입력된 JSON 데이터 출력
         print("Received JSON data:")
         print(json.dumps(input_data, indent=4))
 
-        # getPredictData 함수 호출로 데이터를 처리
         processed_data = getPredictData(input_data)
         formatted_result = format_prediction_result(processed_data)
 
-        # 예측 결과를 반환
         return jsonify(formatted_result)
 
     except Exception as e:
