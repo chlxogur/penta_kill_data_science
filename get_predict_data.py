@@ -125,7 +125,8 @@ def getPredictData(match):
     players_form_df = None
     STAT_MEDIAN_MULTIPLIER = 0.7
     present_data = joblib.load('../data/present_data.pkl')
-    model, scaler, X_columns = joblib.load('../data/model_draft5_5_1.pkl')
+    #present_data = joblib.load('../data/present_data_for_test.pkl')
+    model, scaler, X_columns = joblib.load('../data/model_draft5_7_1.pkl')
     teams = match["teams"]
     blueteam = teams[0]
     redteam = teams[1]
@@ -133,30 +134,16 @@ def getPredictData(match):
     redteam_id = redteam["esportsTeamId"]
     blueteam_players = blueteam["participantMetadata"]
     redteam_players = redteam["participantMetadata"]
-    if present_data["team_history"][blueteam_id] is not None:
-        blue_winrate = present_data['team_history'][blueteam_id]["self"]["winrate"]
-        blue_golddiff = present_data['team_history'][blueteam_id]["self"]["golddiff"]
-        blue_killdiff = present_data['team_history'][blueteam_id]["self"]["killdiff"]
-    else:
-        blue_winrate = 0.5
-        blue_golddiff = 0
-        blue_killdiff = 0
-    if present_data["team_history"][blueteam_id][redteam_id] is not None:
-        headtohead_winrate = present_data['team_history'][blueteam_id][redteam_id]["winrate"]
-        headtohead_golddiff = present_data['team_history'][blueteam_id][redteam_id]["golddiff"]
-        headtohead_killdiff = present_data['team_history'][blueteam_id][redteam_id]["killdiff"]
-    else:
-        headtohead_winrate = 0.5
-        headtohead_golddiff = 0
-        headtohead_killdiff = 0
-    if present_data["team_history"][redteam_id] is not None:
-        red_winrate = present_data['team_history'][redteam_id]["self"]["winrate"]
-        red_golddiff = present_data['team_history'][redteam_id]["self"]["golddiff"]
-        red_killdiff = present_data['team_history'][redteam_id]["self"]["killdiff"]
-    else:
-        red_winrate = 0.5
-        red_golddiff = 0
-        red_killdiff = 0
+    blue_winrate = present_data['team_history'][blueteam_id]["self"]["winrate"] if present_data["team_history"].get(blueteam_id) else 0.5
+    blue_golddiff = present_data['team_history'][blueteam_id]["self"]["golddiff"] if present_data["team_history"].get(blueteam_id) else 0
+    blue_killdiff = present_data['team_history'][blueteam_id]["self"]["killdiff"] if present_data["team_history"].get(blueteam_id) else 0
+    headtohead_winrate = present_data['team_history'][blueteam_id][redteam_id]["winrate"] if present_data["team_history"].get(blueteam_id) and present_data["team_history"][blueteam_id].get(redteam_id) else 0.5
+    headtohead_golddiff = present_data['team_history'][blueteam_id][redteam_id]["golddiff"] if present_data["team_history"].get(blueteam_id) and present_data["team_history"][blueteam_id].get(redteam_id) else 0
+    headtohead_killdiff = present_data['team_history'][blueteam_id][redteam_id]["killdiff"] if present_data["team_history"].get(blueteam_id) and present_data["team_history"][blueteam_id].get(redteam_id) else 0
+    red_winrate = present_data['team_history'][redteam_id]["self"]["winrate"] if present_data["team_history"].get(redteam_id) else 0.5
+    red_golddiff = present_data['team_history'][redteam_id]["self"]["golddiff"] if present_data["team_history"].get(redteam_id) else 0
+    red_killdiff = present_data['team_history'][redteam_id]["self"]["killdiff"] if present_data["team_history"].get(redteam_id) else 0
+
     columns_of_role = []
     for i in range(2):  # 블루팀과 레드팀 2개
         columns_of_role.extend(["Top" for j in range(PITCHERS_NUMBER_OF_A_PLAYER)])
@@ -175,10 +162,11 @@ def getPredictData(match):
     columns_df = pd.DataFrame(columns_dict)
     for idx, player in enumerate(blueteam_players):
         player_id = player["esportsPlayerId"]
-        if present_data["player_form"][numberToRoleName(idx)][player_id] is not None:
+        if present_data["player_form"].get(numberToRoleName(idx)) and present_data["player_form"][numberToRoleName(idx)].get(player_id):
             player_form = present_data["player_form"][numberToRoleName(idx)][player_id]
         else:
             median_player_dict = {key: value * STAT_MEDIAN_MULTIPLIER for key, value in getMedian(0, idx).items}
+            #median_player_dict = {key: value * STAT_MEDIAN_MULTIPLIER for key, value in getMedian(1, idx).items}
             player_form = pd.DataFrame(median_player_dict, index=[0]).T
             player_form.reset_index(inplace = True)
             player_form.columns = ["elements", "formvalue"]
@@ -188,10 +176,11 @@ def getPredictData(match):
             players_form_df = pd.concat([players_form_df, player_form], ignore_index = True)
     for idx, player in enumerate(redteam_players):
         player_id = player["esportsPlayerId"]
-        if present_data["player_form"][numberToRoleName(idx)][player_id] is not None:
+        if present_data["player_form"].get(numberToRoleName(idx)) and present_data["player_form"][numberToRoleName(idx)].get(player_id):
             player_form = present_data["player_form"][numberToRoleName(idx)][player_id]
         else:
             median_player_dict = {key: value * STAT_MEDIAN_MULTIPLIER for key, value in getMedian(0, idx).items}
+            #median_player_dict = {key: value * STAT_MEDIAN_MULTIPLIER for key, value in getMedian(1, idx).items}
             player_form = pd.DataFrame(median_player_dict, index=[0]).T
             player_form.reset_index(inplace = True)
             player_form.columns = ["elements", "formvalue"]
