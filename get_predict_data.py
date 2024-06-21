@@ -162,7 +162,7 @@ def getPredictData(match):
     columns_df = pd.DataFrame(columns_dict)
     for idx, player in enumerate(blueteam_players):
         player_id = player["esportsPlayerId"]
-        if present_data["player_form"].get(numberToRoleName(idx)) and present_data["player_form"][numberToRoleName(idx)].get(player_id):
+        if present_data["player_form"].get(numberToRoleName(idx)) and present_data["player_form"][numberToRoleName(idx)].get(player_id, None) is not None:
             player_form = present_data["player_form"][numberToRoleName(idx)][player_id]
         else:
             median_player_dict = {key: value * STAT_MEDIAN_MULTIPLIER for key, value in getMedian(0, idx).items}
@@ -176,7 +176,7 @@ def getPredictData(match):
             players_form_df = pd.concat([players_form_df, player_form], ignore_index = True)
     for idx, player in enumerate(redteam_players):
         player_id = player["esportsPlayerId"]
-        if present_data["player_form"].get(numberToRoleName(idx)) and present_data["player_form"][numberToRoleName(idx)].get(player_id):
+        if present_data["player_form"].get(numberToRoleName(idx)) and present_data["player_form"][numberToRoleName(idx)].get(player_id, None) is not None:
             player_form = present_data["player_form"][numberToRoleName(idx)][player_id]
         else:
             median_player_dict = {key: value * STAT_MEDIAN_MULTIPLIER for key, value in getMedian(0, idx).items}
@@ -222,3 +222,94 @@ def getPredictData(match):
     players_form_df["teamKillDiff"] = scaler["teamKillDiff"].transform(players_form_df["teamKillDiff"].values.reshape(-1, 1))
     predict = model.predict_proba(players_form_df)
     return predict
+
+data = {
+    "matchId": "112274687401036074",
+    "teams" : [
+        {
+            "esportsTeamId": "98926509892121852",
+            "participantMetadata": [
+                {
+                    "participantId": 1,
+                    "esportsPlayerId": "99322214662601038",
+                    "summonerName": "FlyQuest",
+                    "championId": "Urgot",
+                    "role": "top"
+                },
+                {
+                    "participantId": 2,
+                    "esportsPlayerId": "101389713966873995",
+                    "summonerName": "FlyQuest",
+                    "championId": "Sejuani",
+                    "role": "jungle"
+                },
+                {
+                    "participantId": 3,
+                    "esportsPlayerId": "98767991798919851",
+                    "summonerName": "FlyQuest",
+                    "championId": "Taliyah",
+                    "role": "mid"
+                },
+                {
+                    "participantId": 4,
+                    "esportsPlayerId": "108369186353082038",
+                    "summonerName": "FlyQuest",
+                    "championId": "Jinx",
+                    "role": "bottom"
+                },
+                {
+                    "participantId": 5,
+                    "esportsPlayerId": "106625308523122120",
+                    "summonerName": "FlyQuest",
+                    "championId": "Nautilus",
+                    "role": "support"
+                }
+            ]
+        },
+        {
+            "esportsTeamId": "104367068120825486",
+            "participantMetadata": [
+                {
+                    "participantId": 6,
+                "esportsPlayerId": "104573202011010010",
+                    "summonerName": "PSG Talon",
+                    "championId": "Rumble",
+                    "role": "top"
+
+                },
+                {
+                    "participantId": 7,
+                    "esportsPlayerId": "101971954398227333",
+                    "summonerName": "PSG Talon",
+                    "championId": "JarvanIV",
+                    "role": "jungle"
+                },
+                {
+                    "participantId": 8,
+                    "esportsPlayerId": "98767991764579452",
+                    "summonerName": "PSG Talon",
+                    "championId": "Rumble",
+                    "role": "mid"
+
+                },
+                {
+                    "participantId": 9,
+                    "esportsPlayerId": "98767975924333750",
+                    "summonerName": "PSG Talon",
+                    "championId": "JarvanIV",
+                    "role": "bottom"
+                },
+                {
+                    "participantId": 10,
+                    "esportsPlayerId": "99566406444168246",
+                    "summonerName": "PSG Talon",
+                    "championId": "JarvanIV",
+                    "role": "support"
+                }
+            ]
+
+        }
+    ]
+}
+
+print(getPredictData(data))
