@@ -204,7 +204,7 @@ def getPredictData(match):
             if present_data["player_form"].get(numberToRoleName(idx)) and present_data["player_form"][numberToRoleName(idx)].get(player_id, None) is not None:
                 player_form = present_data["player_form"][numberToRoleName(idx)][player_id]
             else:
-                median_player_dict = {key: value * STAT_MEDIAN_MULTIPLIER for key, value in getMedian(0, idx).items}
+                median_player_dict = {key: value * STAT_MEDIAN_MULTIPLIER for key, value in getMedian(0, idx).items()}
                 #median_player_dict = {key: value * STAT_MEDIAN_MULTIPLIER for key, value in getMedian(1, idx).items}
                 player_form = pd.DataFrame(median_player_dict, index=[0]).T
                 player_form.reset_index(inplace = True)
@@ -219,7 +219,7 @@ def getPredictData(match):
             if present_data["player_form"].get(numberToRoleName(idx)) and present_data["player_form"][numberToRoleName(idx)].get(player_id, None) is not None:
                 player_form = present_data["player_form"][numberToRoleName(idx)][player_id]
             else:
-                median_player_dict = {key: value * STAT_MEDIAN_MULTIPLIER for key, value in getMedian(0, idx).items}
+                median_player_dict = {key: value * STAT_MEDIAN_MULTIPLIER for key, value in getMedian(0, idx).items()}
                 #median_player_dict = {key: value * STAT_MEDIAN_MULTIPLIER for key, value in getMedian(1, idx).items}
                 player_form = pd.DataFrame(median_player_dict, index=[0]).T
                 player_form.reset_index(inplace = True)
@@ -300,4 +300,4 @@ def predict_endpoint():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    app.run(debug=True)
