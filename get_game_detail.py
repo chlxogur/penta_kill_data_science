@@ -269,8 +269,8 @@ def removeAbnormalRows(df):
 
 ###### 아래부턴 실행되는 부분 ######
 id_list = [0] # <- 요 부분에 원하는 숫자 넣고 돌리시면 됩니다.
-#TARGET_PATH = "../data/collected_data/"
-TARGET_PATH = "../data/collected_data_test/"
+TARGET_PATH = "../data/collected_data/"
+#TARGET_PATH = "../data/collected_data_test/"
 for i in id_list:
     game_ids = pd.read_excel(f"../data/game_ids/game_id_{i}.xlsx") 
     #game_ids = pd.read_excel(f"../data/game_ids_for_test/game_id_for_test_{i}.xlsx")
