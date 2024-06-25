@@ -168,8 +168,8 @@ def getPredictData(match):
         if present_data["player_form"].get(numberToRoleName(idx)) and present_data["player_form"][numberToRoleName(idx)].get(player_id, None) is not None:
             player_form = present_data["player_form"][numberToRoleName(idx)][player_id]     # 선수 데이터가 있으면 불러옴.
         else:
-            median_player_dict = {key: value * STAT_MEDIAN_MULTIPLIER for key, value in getMedian(0, idx).items}    # 없으면 중간값의 0.7만큼을 채워줌
-            #median_player_dict = {key: value * STAT_MEDIAN_MULTIPLIER for key, value in getMedian(1, idx).items}
+            median_player_dict = {key: value * STAT_MEDIAN_MULTIPLIER for key, value in getMedian(0, idx).items()}    # 없으면 중간값의 0.7만큼을 채워줌
+            #median_player_dict = {key: value * STAT_MEDIAN_MULTIPLIER for key, value in getMedian(1, idx).items()}
             player_form = pd.DataFrame(median_player_dict, index=[0]).T     # 피벗 테이블을 위해 형식 맞춰주는 부분.
             player_form.reset_index(inplace = True)
             player_form.columns = ["elements", "formvalue"]
@@ -182,8 +182,8 @@ def getPredictData(match):
         if present_data["player_form"].get(numberToRoleName(idx)) and present_data["player_form"][numberToRoleName(idx)].get(player_id, None) is not None:
             player_form = present_data["player_form"][numberToRoleName(idx)][player_id]     # 선수 데이터가 있으면 불러옴.
         else:
-            median_player_dict = {key: value * STAT_MEDIAN_MULTIPLIER for key, value in getMedian(0, idx).items}    # 없으면 중간값의 0.7만큼을 채워줌.
-            #median_player_dict = {key: value * STAT_MEDIAN_MULTIPLIER for key, value in getMedian(1, idx).items}
+            median_player_dict = {key: value * STAT_MEDIAN_MULTIPLIER for key, value in getMedian(0, idx).items()}    # 없으면 중간값의 0.7만큼을 채워줌.
+            #median_player_dict = {key: value * STAT_MEDIAN_MULTIPLIER for key, value in getMedian(1, idx).items()}
             player_form = pd.DataFrame(median_player_dict, index=[0]).T     # 피벗 테이블을 위해 형식 맞춰주는 부분.
             player_form.reset_index(inplace = True)
             player_form.columns = ["elements", "formvalue"]
@@ -227,3 +227,61 @@ def getPredictData(match):
     players_form_df["teamKillDiff"] = scaler["teamKillDiff"].transform(players_form_df["teamKillDiff"].values.reshape(-1, 1))
     predict = model.predict_proba(players_form_df)          # 확률을 뽑아내는 부분.
     return predict
+
+data = {
+    "matchId" : "112435564214584190",
+    "teams" : [
+        {
+            "esportsTeamId" : "102747101565183056",
+            "participantMetadata" : [
+                {
+                    "esportsPlayerId" : "105501844568585626",
+                    "role" : "top"
+                },
+                {
+                    "esportsPlayerId" : "105501846040405864",
+                    "role" : "jungle"
+                },
+                {
+                    "esportsPlayerId" : "108511159661913839",
+                    "role" : "mid"   
+                },
+                {
+                    "esportsPlayerId" : "108205131402932252",
+                    "role" : "bottom"
+                },
+                {
+                    "esportsPlayerId" : "101909007446629666",
+                    "role" : "support"
+                }
+            ]
+        },
+        {
+            "esportsTeamId" : "100725845022060229",
+            "participantMetadata" : [
+                {
+                    "esportsPlayerId" : "105501790021137688",
+                    "role" : "top"
+                },
+                {
+                    "esportsPlayerId" : "107492130895812257",
+                    "role" : "jungle"
+                },
+                {
+                    "esportsPlayerId" : "104284310661848687",
+                    "role" : "mid"   
+                },
+                {
+                    "esportsPlayerId" : "105320670306436651",
+                    "role" : "bottom"
+                },
+                {
+                    "esportsPlayerId" : "105501861909424007",
+                    "role" : "support"
+                }
+            ]
+        }
+    ]
+}
+
+print(getPredictData(data))
