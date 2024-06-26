@@ -5,7 +5,7 @@ import numpy as np
 from tqdm import tqdm
 import pickle
 from calculateColumnsForModel import calculateColumnsForModel, getMedianOfCollectedData, numberToRoleName
-from common_constants import PARTICIPANTS_NUMBER_OF_A_TEAM, RANGE_OF_RECENT_GAME, YEAR_DAYS, HALF_OF_YEAR_DAYS, STAT_MEDIAN_MULTIPLIER
+from common_constants import PARTICIPANTS_NUMBER_OF_A_TEAM, RANGE_OF_RECENT_GAME, YEAR_DAYS, HALF_OF_YEAR_DAYS, STAT_MEDIAN_MULTIPLIER, SHRINKAGE_RATE
 
 participant_ids_by_role = []
 team_Ids_list = []
@@ -55,23 +55,25 @@ for team_id in tqdm(team_Ids_list):
     subrow_count = 0
     team_golddiff_sum = 0
     team_killdiff_sum = 0
+    weight = 1
     target_games = past_games_df[(past_games_df["esportsTeamId_Blue"] == team_id) | (past_games_df["esportsTeamId_Red"] == team_id)]    # 블루팀에 있든 레드팀에 있든 상관없이
     for idx, row in target_games.iterrows():
         target_game_detail = last_row_of_collected_datas_df[last_row_of_collected_datas_df["gameId"] == row["gameId"]].T.squeeze()
         if (last_game_time - row["startTime(match)"]) > timedelta(days=YEAR_DAYS):      # 최근 1년 경기가 아니면
             break
         else:                   # 팀 승리 여부와, 해당 경기에서 골드격차와 킬격차를 얼마나 냈는지 계산하는 부분이다.
-            subrow_count += 1
+            subrow_count += weight
             if row["esportsTeamId_Blue"] == team_id:
-                team_golddiff_sum += (target_game_detail["blue_totalGold"] - target_game_detail["red_totalGold"]) / target_game_detail["duration"]
-                team_killdiff_sum += (target_game_detail["blue_totalKills"] - target_game_detail["red_totalKills"]) / target_game_detail["duration"]
+                team_golddiff_sum += ((target_game_detail["blue_totalGold"] - target_game_detail["red_totalGold"]) / target_game_detail["duration"]) * weight
+                team_killdiff_sum += ((target_game_detail["blue_totalKills"] - target_game_detail["red_totalKills"]) / target_game_detail["duration"]) * weight
                 if row["winner_side"] == "Blue":
-                    team_wincount += 1
+                    team_wincount += weight
             elif row["esportsTeamId_Red"] == team_id:
-                team_golddiff_sum += (target_game_detail["red_totalGold"] - target_game_detail["blue_totalGold"]) / target_game_detail["duration"]
-                team_killdiff_sum += (target_game_detail["red_totalKills"] - target_game_detail["blue_totalKills"]) / target_game_detail["duration"]
+                team_golddiff_sum += ((target_game_detail["red_totalGold"] - target_game_detail["blue_totalGold"]) / target_game_detail["duration"]) * weight
+                team_killdiff_sum += ((target_game_detail["red_totalKills"] - target_game_detail["blue_totalKills"]) / target_game_detail["duration"]) * weight
                 if row["winner_side"] == "Red":
-                    team_wincount += 1
+                    team_wincount += weight
+            weight = weight * SHRINKAGE_RATE
                 
     team_winrate = team_wincount / (subrow_count + 2)   # 데이터가 적을 때 극단적인 승률이 나오는 걸 방지하기 위해 가상의 1승 1패를 더하는데 그 중 1패(정확히는 가상의 2전을 더하는) 부분
     if subrow_count == 0:                   # 0으로 나누는 걸 피하기 위한 코드
@@ -100,23 +102,25 @@ for team_id in tqdm(team_Ids_list):
             particular_subrow_count = 0
             particular_golddiff_sum = 0
             particular_killdiff_sum = 0
+            particular_weight = 1
             for idx, row in target_games.iterrows():
                 target_game_detail = last_row_of_collected_datas_df[last_row_of_collected_datas_df["gameId"] == row["gameId"]].T.squeeze()
                 if (particular_subrow_count > RANGE_OF_RECENT_GAME) and (last_game_time - row["startTime(match)"] > timedelta(days=YEAR_DAYS)): # 여기서는 최소 count 조건을 하나 더 추가했는데, 특정한 어떤 두 팀이 만나는 경우가 1년에 얼마 없을 수도 있기 때문이다.
                                                                                                                                                 # (e.g. 다른 리그에 속한 팀끼리 국제전을 하는 경우 등등)
                     break
                 else:
-                    particular_subrow_count += 1
+                    particular_subrow_count += particular_weight
                     if ((row["esportsTeamId_Blue"] == team_id) & (row["esportsTeamId_Red"] == opposite_team_id)):
-                        particular_golddiff_sum += (target_game_detail["blue_totalGold"] - target_game_detail["red_totalGold"]) / target_game_detail["duration"]
-                        particular_killdiff_sum += (target_game_detail["blue_totalKills"] - target_game_detail["red_totalKills"]) / target_game_detail["duration"]
+                        particular_golddiff_sum += ((target_game_detail["blue_totalGold"] - target_game_detail["red_totalGold"]) / target_game_detail["duration"]) * particular_weight
+                        particular_killdiff_sum += ((target_game_detail["blue_totalKills"] - target_game_detail["red_totalKills"]) / target_game_detail["duration"]) * particular_weight
                         if (row["winner_side"] == "Blue"):
-                            particular_wincount += 1
+                            particular_wincount += particular_weight
                     elif ((row["esportsTeamId_Red"] == team_id) & (row["esportsTeamId_Blue"] == opposite_team_id)):
-                        particular_golddiff_sum += (target_game_detail["red_totalGold"] - target_game_detail["blue_totalGold"]) / target_game_detail["duration"]
-                        particular_killdiff_sum += (target_game_detail["red_totalKills"] - target_game_detail["blue_totalKills"]) / target_game_detail["duration"]
+                        particular_golddiff_sum += ((target_game_detail["red_totalGold"] - target_game_detail["blue_totalGold"]) / target_game_detail["duration"]) * particular_weight
+                        particular_killdiff_sum += ((target_game_detail["red_totalKills"] - target_game_detail["blue_totalKills"]) / target_game_detail["duration"]) * particular_weight
                         if (row["winner_side"] == "Red"):
-                            particular_wincount += 1
+                            particular_wincount += particular_weight
+                    particular_weight = particular_weight * SHRINKAGE_RATE
             particular_winrate = particular_wincount / (particular_subrow_count + 2)    # 데이터가 적을 때 극단적인 승률이 나오는 걸 방지하기 위해 가상의 1승 1패를 더하는데 그 중 1패(정확히는 가상의 2전을 더하는) 부분
             if particular_subrow_count == 0:                                # 0으로 나누는걸 피하기 위한 코드.
                 particular_golddiff = particular_golddiff_sum

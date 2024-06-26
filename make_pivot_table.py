@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import numpy as np
 from tqdm import tqdm
 from calculateColumnsForModel import calculateColumnsForModel, getMedianOfCollectedData, numberToRoleName
-from common_constants import PARTICIPANTS_NUMBER_OF_A_TEAM, PITCHERS_NUMBER_OF_A_PLAYER, RANGE_OF_RECENT_GAME, YEAR_DAYS, HALF_OF_YEAR_DAYS, STAT_MEDIAN_MULTIPLIER
+from common_constants import PARTICIPANTS_NUMBER_OF_A_TEAM, PITCHERS_NUMBER_OF_A_PLAYER, RANGE_OF_RECENT_GAME, YEAR_DAYS, HALF_OF_YEAR_DAYS, STAT_MEDIAN_MULTIPLIER, SHRINKAGE_RATE
 
 participant_ids_by_role = []
 DETAIL_PATH = "../data/collected_data/"
@@ -42,6 +42,7 @@ for idx, row in tqdm(included_all_ids_df_sorted.iterrows(), total = included_all
         subrow_count = 0
         blueteam_golddiff_sum = 0
         blueteam_killdiff_sum = 0
+        weight = 1
         subdata_blueteam = previous_subdata_df[(previous_subdata_df["esportsTeamId_Blue"] == row["esportsTeamId_Blue"]) | 
                                                (previous_subdata_df["esportsTeamId_Red"] == row["esportsTeamId_Blue"])
                                                ]# 블루 레드팀 어디든 현재 블루팀과 팀이 같은 경기가 있을 떼
@@ -49,18 +50,19 @@ for idx, row in tqdm(included_all_ids_df_sorted.iterrows(), total = included_all
             if row["startTime(match)"] - sub_row["startTime(match)"] > timedelta(days=YEAR_DAYS): # 최근 1년 경기가 아니면(바꾸는중)
                 break   
             else:
-                subrow_count += 1
+                subrow_count += weight
                 target_game = last_row_of_collected_datas_df[last_row_of_collected_datas_df["gameId"] == sub_row["gameId"]].T.squeeze()
                 if (sub_row["esportsTeamId_Blue"] == row["esportsTeamId_Blue"]):
-                    blueteam_golddiff_sum += (target_game["blue_totalGold"] - target_game["red_totalGold"]) / target_game["duration"]
-                    blueteam_killdiff_sum += (target_game["blue_totalKills"] - target_game["red_totalKills"]) / target_game["duration"]
+                    blueteam_golddiff_sum += ((target_game["blue_totalGold"] - target_game["red_totalGold"]) / target_game["duration"]) * weight
+                    blueteam_killdiff_sum += ((target_game["blue_totalKills"] - target_game["red_totalKills"]) / target_game["duration"]) * weight
                     if (sub_row["winner_side"] == "Blue"):
-                        blueteam_wincount += 1
+                        blueteam_wincount += weight
                 elif (sub_row["esportsTeamId_Red"] == row["esportsTeamId_Blue"]):
-                    blueteam_golddiff_sum += (target_game["red_totalGold"] - target_game["blue_totalGold"]) / target_game["duration"]
-                    blueteam_killdiff_sum += (target_game["red_totalKills"] - target_game["blue_totalKills"]) / target_game["duration"]
+                    blueteam_golddiff_sum += ((target_game["red_totalGold"] - target_game["blue_totalGold"]) / target_game["duration"]) * weight
+                    blueteam_killdiff_sum += ((target_game["red_totalKills"] - target_game["blue_totalKills"]) / target_game["duration"]) * weight
                     if (sub_row["winner_side"] == "Red"):
-                        blueteam_wincount += 1
+                        blueteam_wincount += weight
+                weight = weight * SHRINKAGE_RATE
          
         blueteam_winrate = blueteam_wincount / (subrow_count + 2)  # + 2의 의미는 임의로 2전을 추가해서 바로위에 wincount+1한거와 함께 1전 1패의 가상데이터를 넣어준거임.
         if subrow_count == 0:
@@ -74,6 +76,7 @@ for idx, row in tqdm(included_all_ids_df_sorted.iterrows(), total = included_all
         subrow_count = 0
         redteam_golddiff_sum = 0
         redteam_killdiff_sum = 0
+        weight = 1
         subdata_redteam = previous_subdata_df[(previous_subdata_df["esportsTeamId_Blue"] == row["esportsTeamId_Red"]) | 
                                               (previous_subdata_df["esportsTeamId_Red"] == row["esportsTeamId_Red"])
                                               ]# 블루 레드팀 어디든 현재 레드팀과 팀이 같은 경기가 있을 떼
@@ -81,18 +84,20 @@ for idx, row in tqdm(included_all_ids_df_sorted.iterrows(), total = included_all
             if row["startTime(match)"] - sub_row["startTime(match)"] > timedelta(days=YEAR_DAYS): # 최근 1년 경기가 아니면(바꾸는중)
                 break
             else:
-                subrow_count += 1
+                subrow_count += weight
                 target_game = last_row_of_collected_datas_df[last_row_of_collected_datas_df["gameId"] == sub_row["gameId"]].T.squeeze()
                 if (sub_row["esportsTeamId_Blue"] == row["esportsTeamId_Red"]):
-                    redteam_golddiff_sum += (target_game["blue_totalGold"] - target_game["red_totalGold"]) / target_game["duration"]
-                    redteam_killdiff_sum += (target_game["blue_totalKills"] - target_game["red_totalKills"]) / target_game["duration"]
+                    redteam_golddiff_sum += ((target_game["blue_totalGold"] - target_game["red_totalGold"]) / target_game["duration"]) * weight
+                    redteam_killdiff_sum += ((target_game["blue_totalKills"] - target_game["red_totalKills"]) / target_game["duration"]) * weight
                     if (sub_row["winner_side"] == "Blue"):
-                        redteam_wincount += 1
+                        redteam_wincount += weight
                 elif (sub_row["esportsTeamId_Red"] == row["esportsTeamId_Red"]):
-                    redteam_golddiff_sum += (target_game["red_totalGold"] - target_game["blue_totalGold"]) / target_game["duration"]
-                    redteam_killdiff_sum += (target_game["red_totalKills"] - target_game["blue_totalKills"]) / target_game["duration"]
+                    redteam_golddiff_sum += ((target_game["red_totalGold"] - target_game["blue_totalGold"]) / target_game["duration"]) * weight
+                    redteam_killdiff_sum += ((target_game["red_totalKills"] - target_game["blue_totalKills"]) / target_game["duration"]) * weight
                     if (sub_row["winner_side"] == "Red"):
-                        redteam_wincount += 1
+                        redteam_wincount += weight
+                weight = weight * SHRINKAGE_RATE
+
         redteam_winrate = redteam_wincount / (subrow_count + 2)  # + 2의 의미는 임의로 2전을 추가해서 바로위에 wincount+1한거와 함께 1전 1패의 가상데이터를 넣어준거임. 이렇게 100%와 0%의 극단적인 경우를 피해봄
         if subrow_count == 0:
             redteam_golddiff = redteam_golddiff_sum
@@ -105,6 +110,7 @@ for idx, row in tqdm(included_all_ids_df_sorted.iterrows(), total = included_all
         subrow_count = 0
         headtohead_golddiff_sum = 0
         headtohead_killdiff_sum = 0
+        weight = 1
         subdata_headtohead = previous_subdata_df[
             ((previous_subdata_df["esportsTeamId_Blue"] == row["esportsTeamId_Blue"]) & 
             (previous_subdata_df["esportsTeamId_Red"] == row["esportsTeamId_Red"])) |
@@ -115,18 +121,20 @@ for idx, row in tqdm(included_all_ids_df_sorted.iterrows(), total = included_all
             if (subrow_count > RANGE_OF_RECENT_GAME) and (row["startTime(match)"] - sub_row["startTime(match)"] > timedelta(days=YEAR_DAYS)): # 10개 이상 상대전적 데이터가 모였고 최근 1년 경기가 아니면(바꿔보는중)
                 break
             else:
-                subrow_count += 1
+                subrow_count += weight
                 target_game = last_row_of_collected_datas_df[last_row_of_collected_datas_df["gameId"] == sub_row["gameId"]].T.squeeze()
                 if (sub_row["esportsTeamId_Blue"] == row["esportsTeamId_Blue"]):
-                    headtohead_golddiff_sum += (target_game["blue_totalGold"] - target_game["red_totalGold"]) / target_game["duration"]
-                    headtohead_killdiff_sum += (target_game["blue_totalKills"] - target_game["red_totalKills"]) / target_game["duration"]
+                    headtohead_golddiff_sum += ((target_game["blue_totalGold"] - target_game["red_totalGold"]) / target_game["duration"]) * weight
+                    headtohead_killdiff_sum += ((target_game["blue_totalKills"] - target_game["red_totalKills"]) / target_game["duration"]) * weight
                     if (sub_row["winner_side"] == "Blue"): # 현재 블루팀과 비교할 블루팀이 같으면서 블루팀이 이겼을 경우
-                        headtohead_wincount += 1
+                        headtohead_wincount += weight
                 elif (sub_row["esportsTeamId_Red"] == row["esportsTeamId_Blue"]):
-                    headtohead_golddiff_sum += (target_game["red_totalGold"] - target_game["blue_totalGold"]) / target_game["duration"]
-                    headtohead_killdiff_sum += (target_game["red_totalKills"] - target_game["blue_totalKills"]) / target_game["duration"]
+                    headtohead_golddiff_sum += ((target_game["red_totalGold"] - target_game["blue_totalGold"]) / target_game["duration"]) * weight
+                    headtohead_killdiff_sum += ((target_game["red_totalKills"] - target_game["blue_totalKills"]) / target_game["duration"]) * weight
                     if (sub_row["winner_side"] == "Red"): # 현재 블루팀과 레드팀이 비교할 게임에서 서로 진영을 바꾸었는데 레드팀이 이겼을 경우(결국 같은 팀이 이겼나를 보기 위한 조건이다)
-                        headtohead_wincount += 1
+                        headtohead_wincount += weight
+                weight = weight * SHRINKAGE_RATE
+
         headtohead_winrate = headtohead_wincount / (subrow_count + 2)
         if subrow_count == 0:
             headtohead_golddiff = headtohead_golddiff_sum
@@ -233,4 +241,4 @@ for idx, row in tqdm(included_all_ids_df_sorted.iterrows(), total = included_all
         else:
             pre_make_pivot_table_df = pd.concat([pre_make_pivot_table_df, dataset_of_a_game_df], ignore_index=True)
 
-pre_make_pivot_table_df.to_excel("../data/pre_make_pivot_table_draft5.xlsx")    
+pre_make_pivot_table_df.to_excel("../data/pre_make_pivot_table_draft7.xlsx")    
