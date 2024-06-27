@@ -4,7 +4,7 @@ from sklearn.preprocessing import StandardScaler
 import numpy as np
 import joblib
 
-pre_make_pivot_table_df = pd.read_excel("../data/pre_make_pivot_table_draft5.xlsx", dtype = {"gameId":"str"})
+pre_make_pivot_table_df = pd.read_excel("../data/pre_make_pivot_table_draft7.xlsx", dtype = {"gameId":"str"})
 
 teamdata_df = pre_make_pivot_table_df[["gameId", "side", "teamWinrate", "teamGoldDiff", "teamKillDiff"]].drop_duplicates(["gameId", "side"])
 teamdata_df = teamdata_df.pivot(index='gameId', columns='side', values=['teamWinrate', "teamGoldDiff", "teamKillDiff"])
@@ -57,4 +57,4 @@ formvalue_pivot["teamGoldDiff"] = scaler_dict["teamGoldDiff"].fit_transform(form
 scaler_dict["teamKillDiff"] = StandardScaler()
 formvalue_pivot["teamKillDiff"] = scaler_dict["teamKillDiff"].fit_transform(formvalue_pivot["teamKillDiff"].values.reshape(-1, 1))
 
-joblib.dump((formvalue_pivot, scaler_dict), "../data/dataset_draft5_7.pkl")     # joblib으로 출력 후 마무리.
+joblib.dump((formvalue_pivot, scaler_dict), "../data/dataset_draft7_1.pkl")     # joblib으로 출력 후 마무리.

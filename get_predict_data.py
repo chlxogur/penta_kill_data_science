@@ -125,7 +125,7 @@ def getPredictData(match):
     players_form_df = None
     present_data = joblib.load('../data/present_data.pkl')                  # 현재기준 팀과 선수의 수치를 모아놓은 딕셔너리파일
     #present_data = joblib.load('../data/present_data_for_test.pkl')
-    model, scaler, X_columns = joblib.load('../data/model_draft5_7_1.pkl')  # 모델을 불러옴.
+    model, scaler, X_columns = joblib.load('../data/model_draft7_1_2.pkl')  # 모델을 불러옴.
     teams = match["teams"]
     blueteam = teams[0]
     redteam = teams[1]
